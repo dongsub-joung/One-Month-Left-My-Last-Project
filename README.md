@@ -20,17 +20,28 @@ fn main() ->  -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-# LoggingOptions
+# fn setting_target
+
+step-by-step
+- 1st: use PID
+- 2nd: fillter as process name 
+
+# fn logging
+
+- true/false
+
+## LoggingOptions
 - ALL: keyboard, mouse, network resorce
 - KEYBOARD_ONLY 
 - MOUSE_ONLY
 - NETWORK_ACTIVITY_MODE
 
-## enum LoggingOption
+### enum LoggingOption
 
 <img width="901" height="641" alt="0303_14-04-26-enum" src="https://github.com/user-attachments/assets/a7883df5-e9c7-4599-a8ca-ac76d32e69c7" />
 
 by Google's Gemini
 
-# formatOption
+# csv_format_option(@TODO)
 - true: save a log file as Comma-separated values
+- false
