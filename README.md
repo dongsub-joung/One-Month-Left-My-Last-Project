@@ -1,3 +1,4 @@
+
 # This project name is "The Watcher"
 
 I will publish this crates, If I can do it in the end.
@@ -23,7 +24,8 @@ fn main(){
 
 ## enum LoggingOption
 
-
+<img width="901" height="641" alt="0303_14-04-26-enum" src="https://github.com/user-attachments/assets/a7883df5-e9c7-4599-a8ca-ac76d32e69c7" />
+by Google's Gemini
 
 # formatOption
 - true: save a log file as Comma-separated values
