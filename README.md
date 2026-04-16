@@ -8,10 +8,9 @@ Dead end: 14/04/2026 started, after almost 2 month
 use theWatcher::TheWatcher;
 
 fn main() ->  -> Result<(), Box<dyn std::error::Error>> {
-  let pid= 111;
 
-  let mut watcherA= TheWatcher::new();
-  watcherA.setting_target(pid)
+  let mut watcherA= TheWatcher::new(pid);
+  watcherA.setting_target()
           .logging(true, TheWatcher::LoggingOptions::ALL)
           .output_path("./log.txt")
           .csv_format_option(true)?;
@@ -28,7 +27,7 @@ step-by-step
 
 # fn logging
 
-- true/false
+- true(Default)/false
 
 ## LoggingOptions
 - ALL: keyboard, mouse, network resorce
@@ -44,4 +43,4 @@ by Google's Gemini
 
 # csv_format_option(@TODO)
 - true: save a log file as Comma-separated values
-- false
+- false(Default)
