@@ -1,0 +1,6 @@
+[package]
+name = "One-Month-Left-My-Last-Project"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
