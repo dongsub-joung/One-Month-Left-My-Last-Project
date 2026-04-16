@@ -10,7 +10,7 @@ use theWatcher::TheWatcher;
 fn main() ->  -> Result<(), Box<dyn std::error::Error>> {
   let pid= 111;
 
-  let mut watcherA= TheWatcher::new()
+  let mut watcherA= TheWatcher::new();
   watcherA.setting_target(pid)
           .logging(true, TheWatcher::LoggingOptions::ALL)
           .output_path("./log.txt")
