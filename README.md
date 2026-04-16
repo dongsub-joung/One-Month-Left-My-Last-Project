@@ -7,10 +7,10 @@ use theWatcher::TheWatcher;
 
 fn main(){
   let watcherA= TheWatcher::new();
-  let _= watcherA.settingTarget("dota2.exe")
+  let _= watcherA.setting_target("dota2.exe")
                  .logging(true, TheWatcher::LoggingOptions::ALL)
-                 .outPutPath("./log.txt")
-                 .formatOption(true);
+                 .output_path("./log.txt")
+                 .format_option(true);
 }
 ```
 
