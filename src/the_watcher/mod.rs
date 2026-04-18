@@ -1,4 +1,4 @@
-use std::{error::Error, io, process::Stdio};
+use anyhow::Result;
 
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
@@ -10,11 +10,13 @@ pub enum LoggingOptions {
 
 
 pub struct TheWatcher{
-    pub pid: i32,
-    pub logging_flag: bool,
-    pub output_path: &'static str,
-    pub csv_option: bool,
-    pub option: LoggingOptions,
+    pid: i32,
+    logging_flag: bool,
+    output_path: &'static str,
+    csv_option: bool,
+    option: LoggingOptions,
+    // target: process::Something ,
+    // data_bus_steam: Someting,
 }
 
 impl TheWatcher{
@@ -22,11 +24,19 @@ impl TheWatcher{
         let logging_flag= true;
         let csv_option= false;
         let option = LoggingOptions::ALL;
+        // let target= process::new()
+        // let data_bus_steam= something;
 
-        Self{ pid, logging_flag, output_path, csv_option, option }
+        Self{ pid, logging_flag, output_path, csv_option, option } // target, data_bus_steam
     }
 
     pub fn setting_target(&mut self) -> &mut Self{
+        // let target= process::new()
+        
+        // hook a target
+        // self.target= SomeTool::hook(pid);
+        // self.data_bus_steam= something;
+
         self
     }
 
@@ -38,13 +48,23 @@ impl TheWatcher{
         self.logging_flag= flag;
         self.option= option;
         
+        // logging
+        // @TODO
+
         self
     }
 
-    pub fn output_txt_path(&mut self) -> Result<&mut Self, Box<dyn Error>>{
+    pub fn output_txt_path(&mut self) -> Result<&mut Self>{
         if self.output_path == "" {
             self.output_path= "./"
         }
+
+        // Keep writing data bus steam 
+        // io::Write
+        Ok(self)
+    }
+
+    pub fn csv_format_option(&mut self, flag: bool) -> Result<&mut Self>{
 
         Ok(self)
     }

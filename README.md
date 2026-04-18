@@ -7,7 +7,7 @@ Dead end: 14/04/2026 started, after almost 2 month
 ```rust
 use theWatcher::TheWatcher;
 
-fn main() ->  -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
   let pid= 111;
   let output_path= "./dir";
 
