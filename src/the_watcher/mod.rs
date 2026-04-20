@@ -72,7 +72,7 @@ impl TheWatcher {
     }
 
     async fn read_data_stream(data_bus_stream: stream) -> Result<Vec<usize>, Box<dyn Error>> {
-        static let CAPACITY_LINE= 1024000000;
+        static CAPACITY_LINE: usize= 1024000000;
         let mut unwrapped_data: Vec<usize> = Vec::with_capacity(CAPACITY_LINE);
 
         // !TODO if returned err, try to reconn
@@ -95,7 +95,7 @@ impl TheWatcher {
         if unwrapped_data.capcity() >= CAPACITY_LINE {
             return Ok(unwrapped_data);
         } else if unwrapped_data.is_empty(){
-            reutrn Err("No data collected".into());
+            return Err("No data collected".into());
         }
 
         Ok(unwrapped_data)
@@ -110,16 +110,17 @@ impl TheWatcher {
         self.logging_flag = flag;
         self.option = option;
 
-        // !TODO
+        // @TODO
         // If this program save a data as file automatically,
         // i can write my code more consistently(buffer clean, and then keep watching again).
         // But its not a malware. Just in educational purpose.
 
         // logging
         let stream_data = read_data_stream(self.data_bus_stream);
-        // !TODO unwrap data
-        self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
+        // @TODO unwrap data
 
+        let mut ad= &self.buffered_data;
+        self.buffered_data = BufferedData::from(ad, stream_data);
         self
     }
 
