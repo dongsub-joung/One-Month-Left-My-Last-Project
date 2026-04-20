@@ -7,3 +7,4 @@ edition = "2024"
 anyhow = "1.0.102"
 pnet = "0.35.0"
 rdev = "0.5.3"
+tokio = { version = "1.52.1", features = ["full"] }
