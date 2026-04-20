@@ -1,5 +1,8 @@
 use anyhow::Result;
 
+use std::fs::File;
+use std::io::prelude::*;
+
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
     ALL,
@@ -101,21 +104,20 @@ impl TheWatcher {
        
         // logging
         let data= read_data_steam(self.data_bus_steam); 
-       // !TODO unwrap data
+        // !TODO unwrap data
         self.buffered_data= BufferedData::from(self.buffered_data, data);
 
         self
     }
 
     pub fn output_txt_path(&mut self) -> Result<&mut Self> {
-        if self.output_path == "" {
-            self.output_path = "./"
-        }
+        let path= &self.output_path;
+        let full_path= format!("{}/output.txt", path);
 
+        let mut file= File::create(full_path)?;
+        
+        file.write_all(content)?;
 
-
-        // Keep writing data bus steam
-        // io::Write
         Ok(self)
     }
 
