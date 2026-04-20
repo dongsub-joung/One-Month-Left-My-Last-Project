@@ -36,6 +36,9 @@ impl BufferedData{
         self.data= v_data;
         self
     }
+    pub fn unwrap_data(self)-> Vec<usize>{
+        self.data
+    }
 }
 
 impl TheWatcher {
@@ -116,7 +119,10 @@ impl TheWatcher {
 
         let mut file= File::create(full_path)?;
         
-        file.write_all(content)?;
+        file.write_all(BufferedData::unwrap_data(self.buffered_Data)
+            .to_string()
+            .as_bytes()
+        )?;
 
         Ok(self)
     }
