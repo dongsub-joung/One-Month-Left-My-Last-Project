@@ -5,19 +5,23 @@ I will publish this crates, If I can do it in the end.
 Dead end: 14/04/2026 started, after almost 2 month
 
 ```rust
-use theWatcher::TheWatcher;
+use the_watcher::*;
+use anyhow::Result;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-  let pid= 111;
-  let output_path= "./dir";
+mod the_watcher;
 
-  let mut watcherA= TheWatcher::new(pid, output_path);
-  watcherA.setting_target()
-          .logging(true, TheWatcher::LoggingOptions::ALL)
-          .output_txt_path()?
-          .csv_format_option(true)?;
+#[tokio::main]
+async fn main() -> Result<()> {
 
-  Ok(())
+    let mut watcher_a = TheWatcher::new(pid, output_path);
+    watcher_a
+        .setting_target()
+        .logging(true, LoggingOptions::ALL)
+        .await
+        .output_txt_path()?
+        .csv_format_option(true)?;
+
+    Ok(())
 }
 ```
 
