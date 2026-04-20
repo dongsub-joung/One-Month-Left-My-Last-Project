@@ -18,7 +18,7 @@ pub struct TheWatcher {
     csv_option: bool,
     option: LoggingOptions,
     // target: process::Something ,
-    // data_bus_steam: Someting,
+    // data_bus_stream: Someting,
     buffered_data: BufferedData,
 }
 
@@ -47,7 +47,7 @@ impl TheWatcher {
         let csv_option = false;
         let option = LoggingOptions::ALL;
         // let target= process::new()
-        // let data_bus_steam= something;
+        // let data_bus_stream= something;
 
         let buffered_data = BufferedData::new();
 
@@ -58,7 +58,7 @@ impl TheWatcher {
             csv_option,
             option,
             buffered_data,
-        } // target, data_bus_steam
+        } // target, data_bus_stream
     }
 
     pub fn setting_target(&mut self) -> &mut Self {
@@ -71,33 +71,37 @@ impl TheWatcher {
         self
     }
 
-    async fn read_data_steam(data_bus_steam: steam) -> Result<Box<Vec<usize>>> {
-        let mut unwrapped_data: Vec<usize> = Vec::new();
+    async fn read_data_stream(data_bus_stream: stream) -> Result<Vec<usize>, Box<dyn Error>> {
+        static let CAPACITY_LINE= 1024000000;
+        let mut unwrapped_data: Vec<usize> = Vec::with_capacity(CAPACITY_LINE);
 
         // !TODO if returned err, try to reconn
-        {
+        loop{
             let mut buffer_result: Vec<usize> = Vec::new();
             // !TODO define buffer_result max size 1024000000 ~ +5000000)
-            buffer_result = io::read(data_bus_steam)?;
+            buffer_result = tokio::io(data_bus_stream)?;
 
             match buffer_result {
                 Ok(data) => {
-                    unwrapped_data = *(data.unwrap());
+                    unwrapped_data= buffer_result;
+                    break;
                 }
                 Err(e) => {
-                    panic!("can't get the data bus steam");
+                    reutnr Err("can't get data bus stream".into());
                 }
             }
         }
 
-        if unwrapped_data.capcity() >= 1024000000 {
-            return Ok(Box::from(unwrapped_data));
+        if unwrapped_data.capcity() >= CAPACITY_LINE {
+            return Ok(unwrapped_data);
+        } else if unwrapped_data.is_empty(){
+            reutrn Err("No data collected".into());
         }
 
-        Ok(Box::new(Vec::new()))
+        Ok(unwrapped_data)
     }
 
-    fn filtering_data(_steam_data: Vec<usize>) -> String {
+    fn filtering_data(_stream_data: Vec<usize>) -> String {
         let mut filtered_string = "".to_string();
 
         filtered_string
@@ -112,9 +116,9 @@ impl TheWatcher {
         // But its not a malware. Just in educational purpose.
 
         // logging
-        let steam_data = read_data_steam(self.data_bus_steam);
+        let stream_data = read_data_stream(self.data_bus_stream);
         // !TODO unwrap data
-        self.buffered_data = BufferedData::from(self.buffered_data, steam_data);
+        self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
 
         self
     }
@@ -127,12 +131,12 @@ impl TheWatcher {
             true => {
                 let mut file = File::create(full_path)?;
 
-                let unwarped_data = BufferedData::unwarp_data(self.buffered_data);
-                let filtered_data = filtering_data(unwarped_data);
+                let unwrapped_data = BufferedData::unwarp_data(self.buffered_data);
+                let filtered_data = filtering_data(unwrapped_data);
 
                 file.write_all(filtered_data.as_bytes())?;
             }
-            flase => {
+            false => {
                 // @TODO send data to sender as email
             }
         }
