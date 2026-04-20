@@ -96,6 +96,11 @@ impl TheWatcher {
 
         Ok(Box::new(Vec::new()))
     }
+    fn filtered_data(_steam_data: Vec<usize>) -> String{
+        let mut filtered_string= "".to_string();
+
+        filtered_string
+    }
     async pub fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
         self.option = option;
@@ -104,11 +109,12 @@ impl TheWatcher {
         // If this program save a data as file automatically, 
         // i can write my code more consistently(buffer clean, and then watching again).
         // But its not a malware. Just in educational purpose.
-       
+      
+
         // logging
-        let data= read_data_steam(self.data_bus_steam); 
+        let steam_data= read_data_steam(self.data_bus_steam);
         // !TODO unwrap data
-        self.buffered_data= BufferedData::from(self.buffered_data, data);
+        self.buffered_data= BufferedData::from(self.buffered_data, steam_data);
 
         self
     }
@@ -118,9 +124,9 @@ impl TheWatcher {
         let full_path= format!("{}/output.txt", path);
 
         let mut file= File::create(full_path)?;
-        
-        file.write_all(BufferedData::unwrap_data(self.buffered_Data)
-            .to_string()
+
+        let filtered_data= filtering_data(BufferedData::unwarp_data(self.buffered_data);
+        file.write_all(filtered_data)
             .as_bytes()
         )?;
 
