@@ -96,7 +96,7 @@ impl TheWatcher {
 
         Ok(Box::new(Vec::new()))
     }
-    fn filtered_data(_steam_data: Vec<usize>) -> String{
+    fn filtering_data(_steam_data: Vec<usize>) -> String{
         let mut filtered_string= "".to_string();
 
         filtered_string
