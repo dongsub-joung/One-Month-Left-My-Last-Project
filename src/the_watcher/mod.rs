@@ -46,18 +46,20 @@ impl TheWatcher {
     }
 
     async fn read_data_steam(data_bus_steam: steam) -> Result<Box<Vec<usize>>>{
-        let mut buffer_result: Vec<usize>= Vec::new();
         let mut unwrapped_data: Vec<usize>= Vec::new();
 
         // @TODO if returned err, try to reconn
-        buffer_result= io::read(data_bus_steam)?;
+        {
+            let mut buffer_result: Vec<usize>= Vec::new();
+            buffer_result= io::read(data_bus_steam)?;
 
-        match buffer_result{
-            Ok(data) =>{
-                unwrapped_data= *(data.unwrap());
-            },
-            Err(e) =>{
-                panic!("can't get the data bus steam");
+            match buffer_result{
+                Ok(data) =>{
+                    unwrapped_data= *(data.unwrap());
+                },
+                Err(e) =>{
+                    panic!("can't get the data bus steam");
+                }
             }
         }
 
