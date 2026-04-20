@@ -48,9 +48,10 @@ impl TheWatcher {
     async fn read_data_steam(data_bus_steam: steam) -> Result<Box<Vec<usize>>>{
         let mut unwrapped_data: Vec<usize>= Vec::new();
 
-        // @TODO if returned err, try to reconn
+        // !TODO if returned err, try to reconn
         {
             let mut buffer_result: Vec<usize>= Vec::new();
+            // !TODO define buffer_result max size 1024000000 ~ +5000000)
             buffer_result= io::read(data_bus_steam)?;
 
             match buffer_result{
