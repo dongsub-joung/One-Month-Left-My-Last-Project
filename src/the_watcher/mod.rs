@@ -32,8 +32,8 @@ impl BufferedData {
         let data: Vec<usize> = Vec::new();
         Self { data }
     }
-    pub fn from(&mut self, _data: Vec<usize>) -> Self {
-        let mut data= self.data.clone();
+    pub fn from(buffered_data: &BufferedData, _data: Vec<usize>) -> Self {
+        let mut data= buffered_Data.data.clone();
         data.extend(_data);
         
         Self { data }
@@ -121,8 +121,8 @@ impl TheWatcher {
         let stream_data = read_data_stream(self.data_bus_stream);
         // @TODO unwrap data
 
-        let mut ad= &self.buffered_data;
-        self.buffered_data = BufferedData::from(ad, stream_data);
+        let buffered_data= &self.buffered_data;
+        self.buffered_data = BufferedData::from(buffered_data, stream_data);
         self
     }
 
