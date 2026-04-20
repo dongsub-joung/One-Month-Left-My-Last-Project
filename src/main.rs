@@ -14,7 +14,7 @@ async fn main() -> Result<()> {
         .setting_target()
         .logging(true, LoggingOptions::ALL)
         .await
-        .output_txt_path()?
+        .output_txt_path(true)?
         .csv_format_option(true)?;
 
     Ok(())

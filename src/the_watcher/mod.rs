@@ -22,21 +22,21 @@ pub struct TheWatcher {
     buffered_data: BufferedData,
 }
 
-struct BufferedData{
+struct BufferedData {
     // date: Date
     data: Vec<usize>,
     // sender_email: &' static str
 }
-impl BufferedData{
-    pub fn new() -> Self{
-        let data: Vec<usize>= Vec::new();
+impl BufferedData {
+    pub fn new() -> Self {
+        let data: Vec<usize> = Vec::new();
         Self { data }
     }
-    pub fn from(&mut self, v_data: Vec<usize>) -> &mut Self{
-        self.data= v_data;
+    pub fn from(&mut self, v_data: Vec<usize>) -> &mut Self {
+        self.data = v_data;
         self
     }
-    pub fn unwrap_data(self)-> Vec<usize>{
+    pub fn unwrap_data(self) -> Vec<usize> {
         self.data
     }
 }
@@ -48,8 +48,8 @@ impl TheWatcher {
         let option = LoggingOptions::ALL;
         // let target= process::new()
         // let data_bus_steam= something;
-        
-        let buffered_data= BufferedData::new();
+
+        let buffered_data = BufferedData::new();
 
         Self {
             pid,
@@ -71,65 +71,71 @@ impl TheWatcher {
         self
     }
 
-    async fn read_data_steam(data_bus_steam: steam) -> Result<Box<Vec<usize>>>{
-        let mut unwrapped_data: Vec<usize>= Vec::new();
+    async fn read_data_steam(data_bus_steam: steam) -> Result<Box<Vec<usize>>> {
+        let mut unwrapped_data: Vec<usize> = Vec::new();
 
         // !TODO if returned err, try to reconn
         {
-            let mut buffer_result: Vec<usize>= Vec::new();
+            let mut buffer_result: Vec<usize> = Vec::new();
             // !TODO define buffer_result max size 1024000000 ~ +5000000)
-            buffer_result= io::read(data_bus_steam)?;
+            buffer_result = io::read(data_bus_steam)?;
 
-            match buffer_result{
-                Ok(data) =>{
-                    unwrapped_data= *(data.unwrap());
-                },
-                Err(e) =>{
+            match buffer_result {
+                Ok(data) => {
+                    unwrapped_data = *(data.unwrap());
+                }
+                Err(e) => {
                     panic!("can't get the data bus steam");
                 }
             }
         }
 
-        if (unwrapped_data.capacity) >= 1024000000{
+        if unwrapped_data.capcity() >= 1024000000 {
             return Ok(Box::from(unwrapped_data));
         }
 
         Ok(Box::new(Vec::new()))
     }
-    fn filtering_data(_steam_data: Vec<usize>) -> String{
-        let mut filtered_string= "".to_string();
+
+    fn filtering_data(_steam_data: Vec<usize>) -> String {
+        let mut filtered_string = "".to_string();
 
         filtered_string
     }
-    async pub fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
+    pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
         self.option = option;
 
-        // !TODO 
-        // If this program save a data as file automatically, 
-        // i can write my code more consistently(buffer clean, and then watching again).
+        // !TODO
+        // If this program save a data as file automatically,
+        // i can write my code more consistently(buffer clean, and then keep watching again).
         // But its not a malware. Just in educational purpose.
-      
 
         // logging
-        let steam_data= read_data_steam(self.data_bus_steam);
+        let steam_data = read_data_steam(self.data_bus_steam);
         // !TODO unwrap data
-        self.buffered_data= BufferedData::from(self.buffered_data, steam_data);
+        self.buffered_data = BufferedData::from(self.buffered_data, steam_data);
 
         self
     }
 
-    pub fn output_txt_path(&mut self) -> Result<&mut Self> {
-        let path= &self.output_path;
-        let full_path= format!("{}/output.txt", path);
+    pub fn output_txt_path(&mut self, flag: bool) -> Result<&mut Self> {
+        let path = &self.output_path;
+        let full_path = format!("{}/output.txt", path);
 
-        let mut file= File::create(full_path)?;
+        match flag {
+            true => {
+                let mut file = File::create(full_path)?;
 
-        let filtered_data= filtering_data(BufferedData::unwarp_data(self.buffered_data);
-        file.write_all(filtered_data)
-            .as_bytes()
-        )?;
+                let unwarped_data = BufferedData::unwarp_data(self.buffered_data);
+                let filtered_data = filtering_data(unwarped_data);
 
+                file.write_all(filtered_data.as_bytes())?;
+            }
+            flase => {
+                // @TODO send data to sender as email
+            }
+        }
         Ok(self)
     }
 
