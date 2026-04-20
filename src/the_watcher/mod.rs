@@ -32,9 +32,11 @@ impl BufferedData {
         let data: Vec<usize> = Vec::new();
         Self { data }
     }
-    pub fn from(&mut self, v_data: Vec<usize>) -> &mut Self {
-        self.data = v_data;
-        self
+    pub fn from(&mut self, _data: Vec<usize>) -> Self {
+        let mut data= self.data.clone();
+        data.extend(_data);
+        
+        Self { data }
     }
     pub fn unwrap_data(self) -> Vec<usize> {
         self.data
