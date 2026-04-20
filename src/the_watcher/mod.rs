@@ -16,6 +16,23 @@ pub struct TheWatcher {
     option: LoggingOptions,
     // target: process::Something ,
     // data_bus_steam: Someting,
+    buffered_data: BufferedData,
+}
+
+struct BufferedData{
+    // date: Date
+    data: Vec<usize>,
+    // sender_email: &' static str
+}
+impl BufferedData{
+    pub fn new() -> Self{
+        let data: Vec<usize>= Vec::new();
+        Self { data }
+    }
+    pub fn from(&mut self, v_data: Vec<usize>) -> &mut Self{
+        self.data= v_data;
+        self
+    }
 }
 
 impl TheWatcher {
@@ -25,6 +42,8 @@ impl TheWatcher {
         let option = LoggingOptions::ALL;
         // let target= process::new()
         // let data_bus_steam= something;
+        
+        let buffered_data= BufferedData::new();
 
         Self {
             pid,
@@ -32,6 +51,7 @@ impl TheWatcher {
             output_path,
             csv_option,
             option,
+            buffered_data,
         } // target, data_bus_steam
     }
 
@@ -74,10 +94,15 @@ impl TheWatcher {
         self.logging_flag = flag;
         self.option = option;
 
-        
+        // !TODO 
+        // If this program save a data as file automatically, 
+        // i can write my code more consistently(buffer clean, and then watching again).
+        // But its not a malware. Just in educational purpose.
+       
         // logging
-        let data= read_data_steam(self.data_bus_steam);
-         
+        let data= read_data_steam(self.data_bus_steam); 
+       // !TODO unwrap data
+        self.buffered_data= BufferedData::from(self.buffered_data, data);
 
         self
     }
