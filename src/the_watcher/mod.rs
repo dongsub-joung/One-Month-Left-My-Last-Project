@@ -73,10 +73,10 @@ impl TheWatcher {
     pub fn setting_target(&mut self) -> &mut Self {
         let setted_target= cfg_select!{
             windows => {
-                       
                 // If AI can drop some codes like this logic,
-                //  malware not need anymore :)
+                //  malware do not need anymore :)
                 //  just conect PC, and then drop that code remotely.
+
             },
             _ => {
                 // @TODO hook a daemon
