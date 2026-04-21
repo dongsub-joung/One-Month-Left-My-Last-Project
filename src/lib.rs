@@ -7,12 +7,9 @@ mod tests {
     use crate::the_watcher::TheWatcher;
     use super::*;
 
-//  thread 'tests::test_get_process_name' (15388) panicked at src\lib.rs:16:21:
-//  assertion `left == right` failed
-//  left: "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Grisaia Chronos Rebellion\\GCR.exe"
-//  right: "value"
-//  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-//  test tests::test_get_process_name ... FAILED
+    //  assertion `left == right` failed
+    //  left: "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Grisaia Chronos Rebellion\\GCR.exe"
+    //  right: "value"
     #[test]
     fn test_get_process_name() {
         unsafe {
@@ -27,4 +24,17 @@ mod tests {
             }
         }
     }
+
+    //  assertion `left == right` failed
+    //  left: "グリザイア クロノスリベリオン"
+    //  right: "value"
+    #[test]
+    fn test_get_title() {
+        let mut _result= String::new();
+        unsafe {
+            _result= TheWatcher::get_current_windows_title_name();
+        }
+        assert_eq!(_result, String::from("value"));
+    }
+    
 }
