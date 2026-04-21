@@ -154,7 +154,12 @@ impl TheWatcher {
                 str_buffer.len() as i32
             );
 
-            let result_title_string= String::from_utf16lossy(&str_buffer[..actual_len as usize]);
+            // Gemini mentioned "Preventing Ghost Windows"
+            let mut reulst_title_string: String;
+            if actual_len != 0{
+                result_title_string= String::from_utf16lossy(&str_buffer[..actual_len as usize]);
+            }
+            
         };
         
         // logging
