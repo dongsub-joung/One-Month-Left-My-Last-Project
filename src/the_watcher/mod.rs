@@ -2,6 +2,13 @@ use anyhow::Result;
 
 use std::fs::File;
 use std::io::prelude::*;
+use windows::{
+    core::*, 
+    Data::Xml::Dom::*,
+    Win32::Foundatuiion::*,
+    Win32::System::Threading::*,
+    Win32::UI::WindowsAndMessaging::*,
+};
 
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
@@ -62,10 +69,16 @@ impl TheWatcher {
             buffered_data,
         } // target, data_bus_stream
     }
-
+    
     pub fn setting_target(&mut self) -> &mut Self {
-        // let target= process::new()
-
+        let setted_target= cfg_select!{
+            windows => {
+                 
+            },
+            _ => {
+                // @TODO hook a daemon
+            }
+        };
         // hook a target
         // self.target= SomeTool::hook(pid);
         // self.data_bus_steam= something;
