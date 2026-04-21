@@ -134,12 +134,15 @@ impl TheWatcher {
 
         unsaft{
             let mut hwnd: windows::Win32::Foundation;
-            let get_hwnd= GetForegroundWindow();
+            let get_hwnd= WindowsAndMessaging::GetForegroundWindow();
             if get_hwnd.is_invalid(){
                 eprint("can't get hwnd");
         i   }else{
                 hwnd= get_hwnd.clone();
             }
+
+            let ipdw_process_id= self.pid.clone;
+            let targeted_process= windows_wins::sys::GetWindowThreadProcessId(hwnd, &mut ipdw_process_id);
         };
         
         // logging
