@@ -124,6 +124,25 @@ impl TheWatcher {
 
         filtered_string
     }
+    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{
+        let handle= Threading::OPenProcess::OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION,
+            false,
+            pid
+        )?;
+
+        let mut buffer= [0u16; 1024];
+        let mut size= buffer.lent() as u32;
+
+        Threading::QueryFullProcessImageNameW(
+            handle,
+            Default::default(),
+            PWSTR(buffer.as_mut_ptr()),
+            &mut size
+        )?;
+
+        Ok(String::from_utf16_lossy(&buffer[..size as usize]))
+    }
     pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
         self.option = option;
@@ -160,6 +179,7 @@ impl TheWatcher {
                 result_title_string= String::from_utf16lossy(&str_buffer[..actual_len as usize]);
             }
             
+
         };
         
         // logging
