@@ -1,5 +1,8 @@
 pub mod the_watcher;
 
+#[macro_use]
+extern crate assert_type_eq;
+
 #[cfg(test)]
 mod tests {
     use crate::the_watcher::TheWatcher;

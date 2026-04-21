@@ -1,11 +1,12 @@
 use anyhow::Result;
 
-use std::fs::File;
+use tokio::io::*;
+use std::{error::Error, fs::File};
 use std::io::prelude::*;
 use windows::{
     core::*, 
     Data::Xml::Dom::*,
-    Win32::Foundatuiion::*,
+    Win32::Foundation::*,
     Win32::System::Threading::*,
     Win32::UI::WindowsAndMessaging::*,
 };
@@ -41,7 +42,7 @@ impl BufferedData {
         Self { data }
     }
     pub fn from(buffered_data: &BufferedData, _data: Vec<usize>) -> Self {
-        let mut data= buffered_Data.data.clone();
+        let mut data= buffered_data.data.clone();
         data.extend(_data);
         
         Self { data }
@@ -50,9 +51,20 @@ impl BufferedData {
         self.data
     }
 }
+cfg_select! {
+    unix => {
+        fn foo() { /* unix specific functionality */ }
+    }
+    target_pointer_width = "32" => {
+        fn foo() { /* non-unix, 32-bit functionality */ }
+    }
+    windows => {
+        fn foo() { /* fallback implementation */ }
+    }
+}
 
 impl TheWatcher {
-    pub fn new(pid: i32, output_path: &'static str) -> Self {
+    pub fn new(pid: u32, output_path: &'static str) -> Self {
         let logging_flag = true;
         let csv_option = false;
         let option = LoggingOptions::ALL;
@@ -72,7 +84,7 @@ impl TheWatcher {
     }
     
     pub fn setting_target(&mut self) -> &mut Self {
-        let setted_target= cfg_select!{
+        let setted_target= cfg_select! {
             windows => {
                 // If AI can drop some codes like this logic,
                 //  malware do not need anymore :)
@@ -82,6 +94,7 @@ impl TheWatcher {
                 // @TODO hook a daemon
             }
         };
+
         // hook a target
         // self.target= SomeTool::hook(pid);
         // self.data_bus_steam= something;
@@ -96,21 +109,28 @@ impl TheWatcher {
         // !TODO if returned err, try to reconn
         loop{
             let mut buffer_result: Vec<usize> = Vec::new();
-            // !TODO define buffer_result max size 1024000000 ~ +5000000)
-            buffer_result = tokio::io(data_bus_stream)?;
+            
+            // @TODO https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html
+            let pointer: core::task::Pin<&mut Self>;
+            buffer_result = AsyncRead::poll_read(
+                pointer,
+                data_bus_stream,
+                buffer_result,
+            )?;
 
+            // !TODO define buffer_result max size 1024000000 ~ +5000000)
             match buffer_result {
                 Ok(data) => {
-                    unwrapped_data= buffer_result;
+                    unwrapped_data= data;
                     break;
                 }
                 Err(e) => {
-                    reutnr Err("can't get data bus stream".into());
+                    return Err("can't get data bus stream".into());
                 }
             }
         }
-
-        if unwrapped_data.capcity() >= CAPACITY_LINE {
+        
+        if unwrapped_data.capacity() >= CAPACITY_LINE {
             return Ok(unwrapped_data);
         } else if unwrapped_data.is_empty(){
             return Err("No data collected".into());
@@ -125,16 +145,16 @@ impl TheWatcher {
         filtered_string
     }
     pub unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{
-        let handle= Threading::OPenProcess::OpenProcess(
+        let handle= OpenProcess(
             PROCESS_QUERY_LIMITED_INFORMATION,
             false,
             pid
         )?;
 
         let mut buffer= [0u16; 1024];
-        let mut size= buffer.lent() as u32;
+        let mut size= buffer.len() as u32;
 
-        Threading::QueryFullProcessImageNameW(
+        QueryFullProcessImageNameW(
             handle,
             Threading::PROCESS_NAME_WIN32,
             PWSTR(buffer.as_mut_ptr()),
@@ -151,32 +171,34 @@ impl TheWatcher {
         // If this program save a data as file automatically,
         // i can write my code more consistently(buffer clean, and then keep watching again).
         // But its not a malware. Just in educational purpose.
-        let pid= self.pid.clone;
+        let pid= self.pid.clone();
         unsafe{
-            let mut hwnd: windows::Win32::Foundation;
-            let get_hwnd= WindowsAndMessaging::GetForegroundWindow();
-            if get_hwnd.is_invalid(){
-                eprint("can't get hwnd");
-        i   }else{
-                hwnd= get_hwnd.clone();
+            let mut hwnd= GetForegroundWindow();
+            if hwnd.is_invalid(){
+                eprint!("can't get hwnd");
+            }else{
+                hwnd= hwnd.clone();
             }
 
             let ipdw_process_id: u32= pid;
-            let targeted_process= windows_wins::sys::GetWindowThreadProcessId(hwnd, &mut ipdw_process_id);
-
-            let title_len= WindowsAndMessaging::GetWindowsTextLengthW(hwnd);
-            let mut str_buffer: Vec<u16>= vec![0; (title_len+1) as usize];
-
-            let actual_len= WindowsAndMessaging::GetWindowsTextLengthW(
+            let targeted_process= GetWindowThreadProcessId(
                 hwnd,
-                str_buffer.as_mut_ptr(),
-                str_buffer.len() as i32
+                Option::Some(&mut ipdw_process_id) 
+            );
+
+            
+            // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
+            let mut str_buffer= [0u16; 1024 as usize];
+            let actual_len= GetWindowTextW(
+                hwnd,
+                &mut str_buffer,
+                // str_buffer.len() as i32
             );
 
             // Gemini mentioned "Preventing Ghost Windows"
             let mut reulst_title_string: String;
             if actual_len != 0{
-                result_title_string= String::from_utf16lossy(&str_buffer[..actual_len as usize]);
+                reulst_title_string= String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
             }
             
 
@@ -199,7 +221,7 @@ impl TheWatcher {
             true => {
                 let mut file = File::create(full_path)?;
 
-                let unwrapped_data = BufferedData::unwarp_data(self.buffered_data);
+                let unwrapped_data = BufferedData::unwrap_data(self.buffered_data);
                 let filtered_data = filtering_data(unwrapped_data);
 
                 file.write_all(filtered_data.as_bytes())?;
