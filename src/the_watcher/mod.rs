@@ -159,7 +159,7 @@ impl TheWatcher {
         filtered_string
     }
 
-    pub unsafe fn get_title(pid: u32)-> String{
+    unsafe fn get_current_windows_title_name()-> String{ // unit test done
         let mut reulst_title_string= String::new();
         
         unsafe{
@@ -169,13 +169,15 @@ impl TheWatcher {
             }else{
                 hwnd= hwnd.clone();
             }
-
-            let ipdw_process_id: u32= pid;
+        
+            let mut ipdw_process_id: u32= 111_u32; // just for fill parameter
             let targeted_process= GetWindowThreadProcessId(
                 hwnd,
                 Option::Some(&mut ipdw_process_id) 
             );
-
+    
+    
+        
             // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
             let mut str_buffer= [0u16; 1024 as usize];
             let actual_len= GetWindowTextW(
@@ -183,15 +185,14 @@ impl TheWatcher {
                 &mut str_buffer,
                 // str_buffer.len() as i32
             );
-
+        
             // Gemini mentioned "Preventing Ghost Windows"
             if actual_len != 0{
                 reulst_title_string= String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
             }
         };
-
         reulst_title_string
-    }
+    } 
     pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
         self.option = option;
