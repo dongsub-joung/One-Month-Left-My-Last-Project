@@ -151,6 +151,7 @@ impl TheWatcher {
             pid
         )?;
 
+        // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
         let mut buffer= [0u16; 1024];
         let mut size= buffer.len() as u32;
 
