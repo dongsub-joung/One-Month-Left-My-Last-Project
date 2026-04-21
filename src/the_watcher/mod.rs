@@ -51,17 +51,6 @@ impl BufferedData {
         self.data
     }
 }
-cfg_select! {
-    unix => {
-        fn foo() { /* unix specific functionality */ }
-    }
-    target_pointer_width = "32" => {
-        fn foo() { /* non-unix, 32-bit functionality */ }
-    }
-    windows => {
-        fn foo() { /* fallback implementation */ }
-    }
-}
 
 impl TheWatcher {
     pub fn new(pid: u32, output_path: &'static str) -> Self {
@@ -144,7 +133,7 @@ impl TheWatcher {
 
         filtered_string
     }
-    pub unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{
+    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{ // unit test done
         let handle= OpenProcess(
             PROCESS_QUERY_LIMITED_INFORMATION,
             false,
@@ -164,15 +153,9 @@ impl TheWatcher {
 
         Ok(String::from_utf16_lossy(&buffer[..size as usize]))
     }
-    pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
-        self.logging_flag = flag;
-        self.option = option;
-
-        // @TODO
-        // If this program save a data as file automatically,
-        // i can write my code more consistently(buffer clean, and then keep watching again).
-        // But its not a malware. Just in educational purpose.
-        let pid= self.pid.clone();
+    pub unsafe fn get_title(pid: u32)-> String{
+        let mut reulst_title_string= String::new();
+        
         unsafe{
             let mut hwnd= GetForegroundWindow();
             if hwnd.is_invalid(){
@@ -187,7 +170,6 @@ impl TheWatcher {
                 Option::Some(&mut ipdw_process_id) 
             );
 
-            
             // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
             let mut str_buffer= [0u16; 1024 as usize];
             let actual_len= GetWindowTextW(
@@ -197,13 +179,21 @@ impl TheWatcher {
             );
 
             // Gemini mentioned "Preventing Ghost Windows"
-            let mut reulst_title_string: String;
             if actual_len != 0{
                 reulst_title_string= String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
             }
-            
-
         };
+    }
+    pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
+        self.logging_flag = flag;
+        self.option = option;
+
+        // @TODO
+        // If this program save a data as file automatically,
+        // i can write my code more consistently(buffer clean, and then keep watching again).
+        // But its not a malware. Just in educational purpose.
+        let pid= self.pid.clone();
+        let v_titles= get_title(pid);
         
         // logging
         let stream_data = read_data_stream(self.data_bus_stream);
@@ -211,6 +201,7 @@ impl TheWatcher {
 
         let buffered_data= &self.buffered_data;
         self.buffered_data = BufferedData::from(buffered_data, stream_data);
+        
         self
     }
 
