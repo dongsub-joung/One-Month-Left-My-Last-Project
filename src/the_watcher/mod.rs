@@ -71,13 +71,38 @@ impl TheWatcher {
             buffered_data,
         } // target, data_bus_stream
     }
-    
+
+    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{ // unit test done
+        let handle= OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION,
+            false,
+            pid
+        )?;
+
+        // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
+        let mut buffer= [0u16; 1024];
+        let mut size= buffer.len() as u32;
+
+        QueryFullProcessImageNameW(
+            handle,
+            Threading::PROCESS_NAME_WIN32,
+            PWSTR(buffer.as_mut_ptr()),
+            &mut size
+        )?;
+
+        Ok(String::from_utf16_lossy(&buffer[..size as usize]))
+    }
     pub fn setting_target(&mut self) -> &mut Self {
+        // If AI can drop some codes like this logic,
+        //  malware do not need anymore :)
+        //  just conect PC, and then drop that code remotely.
         let setted_target= cfg_select! {
             windows => {
-                // If AI can drop some codes like this logic,
-                //  malware do not need anymore :)
-                //  just conect PC, and then drop that code remotely.
+                let string_target_path= match get_name_process(){
+                    Ok(_string) => { return _string },
+                    Err(e) => { return "".to_string() };
+                }
+
             },
             _ => {
                 // @TODO hook a daemon
@@ -133,26 +158,7 @@ impl TheWatcher {
 
         filtered_string
     }
-    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{ // unit test done
-        let handle= OpenProcess(
-            PROCESS_QUERY_LIMITED_INFORMATION,
-            false,
-            pid
-        )?;
 
-        // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
-        let mut buffer= [0u16; 1024];
-        let mut size= buffer.len() as u32;
-
-        QueryFullProcessImageNameW(
-            handle,
-            Threading::PROCESS_NAME_WIN32,
-            PWSTR(buffer.as_mut_ptr()),
-            &mut size
-        )?;
-
-        Ok(String::from_utf16_lossy(&buffer[..size as usize]))
-    }
     pub unsafe fn get_title(pid: u32)-> String{
         let mut reulst_title_string= String::new();
         
