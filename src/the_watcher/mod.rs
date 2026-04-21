@@ -124,7 +124,7 @@ impl TheWatcher {
 
         filtered_string
     }
-    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{
+    pub unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{
         let handle= Threading::OPenProcess::OpenProcess(
             PROCESS_QUERY_LIMITED_INFORMATION,
             false,
@@ -136,7 +136,7 @@ impl TheWatcher {
 
         Threading::QueryFullProcessImageNameW(
             handle,
-            Default::default(),
+            Threading::PROCESS_NAME_WIN32,
             PWSTR(buffer.as_mut_ptr()),
             &mut size
         )?;
