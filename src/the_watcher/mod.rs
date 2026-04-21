@@ -19,7 +19,8 @@ pub enum LoggingOptions {
 }
 
 pub struct TheWatcher {
-    pid: i32,
+    // type.c_ulong
+    pid: u32,
     logging_flag: bool,
     output_path: &'static str,
     csv_option: bool,
@@ -131,8 +132,8 @@ impl TheWatcher {
         // If this program save a data as file automatically,
         // i can write my code more consistently(buffer clean, and then keep watching again).
         // But its not a malware. Just in educational purpose.
-
-        unsaft{
+        let pid= self.pid.clone;
+        unsafe{
             let mut hwnd: windows::Win32::Foundation;
             let get_hwnd= WindowsAndMessaging::GetForegroundWindow();
             if get_hwnd.is_invalid(){
@@ -141,8 +142,19 @@ impl TheWatcher {
                 hwnd= get_hwnd.clone();
             }
 
-            let ipdw_process_id= self.pid.clone;
+            let ipdw_process_id: u32= pid;
             let targeted_process= windows_wins::sys::GetWindowThreadProcessId(hwnd, &mut ipdw_process_id);
+
+            let title_len= WindowsAndMessaging::GetWindowsTextLengthW(hwnd);
+            let mut str_buffer: Vec<u16>= vec![0; (title_len+1) as usize];
+
+            let actual_len= WindowsAndMessaging::GetWindowsTextLengthW(
+                hwnd,
+                str_buffer.as_mut_ptr(),
+                str_buffer.len() as i32
+            );
+
+            let result_title_string= String::from_utf16lossy(&str_buffer[..actual_len as usize]);
         };
         
         // logging
