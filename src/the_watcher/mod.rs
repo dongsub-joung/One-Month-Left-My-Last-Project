@@ -183,6 +183,8 @@ impl TheWatcher {
                 reulst_title_string= String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
             }
         };
+
+        reulst_title_string
     }
     pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
