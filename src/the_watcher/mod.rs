@@ -56,10 +56,10 @@ impl BufferedData {
 impl TheWatcher {
     pub fn new(pid: u32, output_path: &'static str) -> Self {
         let logging_flag = true;
-        let csv_option = false;
+        let csv_option = Default::default();
         let option = LoggingOptions::ALL;
         let buffered_data = BufferedData::new();
-        let target = (String::new(), String::new());
+        let target = (Default::default(), Default::default());
         // let data_bus_stream= something;
 
         Self {
@@ -167,7 +167,7 @@ impl TheWatcher {
     // }
 
     fn filtering_data(_stream_data: Vec<usize>) -> String {
-        let mut filtered_string = "".to_string();
+        let mut filtered_string = String::new();
 
         filtered_string
     }
@@ -190,7 +190,8 @@ impl TheWatcher {
                 GetWindowThreadProcessId(hwnd, Option::Some(&mut ipdw_process_id));
 
             // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
-            let mut str_buffer = [0u16; 1024 as usize];
+            const BUFFER_MAX_SIZE: u16 = 2048_u16;
+            let mut str_buffer = [0u16; BuFFER_MAX_SIZE as usize];
             let actual_len = GetWindowTextW(
                 hwnd,
                 &mut str_buffer,
@@ -219,6 +220,9 @@ impl TheWatcher {
                         None => println!("Erro while finding the dfault interface");
                     }
                 }
+
+                let setted_channel= detalink::channel(&default_interface, Default::default());
+                let (_, mut rx)= match
             },
             _ => {
                 // @TODO crate lib
@@ -234,7 +238,6 @@ impl TheWatcher {
         // i can write my code more consistently(buffer clean, and then keep watching again).
         // But its not a malware. Just in educational purpose.
         let pid = self.pid.clone();
-        let v_titles = get_title(pid);
 
         // logging
         // let stream_data = read_data_stream(self.data_bus_stream);
