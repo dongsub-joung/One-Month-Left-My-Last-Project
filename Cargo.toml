@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.102"
 assert-type-eq = "0.1.0"
+libc = "0.2.185"
 pnet = "0.35.0"
 rdev = "0.5.3"
 tokio = { version = "1.52.1", features = ["full"] }

@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+use libc::{AF_PACKET, ETH_P_ALL, SOCK_RAW, socket};
 use std::io::prelude::*;
 use std::{error::Error, fs::File};
 use tokio::io::*;
@@ -203,7 +204,27 @@ impl TheWatcher {
         };
         reulst_title_string
     }
-    async fn packet_caturing() {}
+    async fn packet_caturing() {
+        cfg_select! {
+            windows =>{
+                // @TODO crate windows_sys
+                let mut default_interface: Vec<NetworkInterface>;
+                {
+                    let v_interfaces= pnet::datalink::interfaces();
+                    default_interface= v_interfaces
+                        .iter()
+                        .find(|e| e.is_up && !e.is_loopback() & !e.ips.is_empty());
+                    match &default_interfcae{
+                        Some(interface) => {println!("Found default intercae wiht [{}]", interface.name)},
+                        None => println!("Erro while finding the dfault interface");
+                    }
+                }
+            },
+            _ => {
+                // @TODO crate lib
+            }
+        }
+    }
     pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
         self.option = option;
@@ -230,7 +251,7 @@ impl TheWatcher {
         // extract receiver, protoccol, and data.
         // show data / exe_name  tap_name  protoccol senderIP
 
-        match self.option {
+        match self.option.clone() {
             LoggingOptions::NETWORK_ACTIVITY_MODE => {
                 packet_caturing();
             }
