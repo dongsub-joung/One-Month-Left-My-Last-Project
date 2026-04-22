@@ -29,8 +29,8 @@ pub struct TheWatcher {
     output_path: &'static str,
     csv_option: bool,
     option: LoggingOptions,
-    target: (String, String),
     buffered_data: BufferedData,
+    target: (String, String),
     // data_bus_stream: Someting,
 }
 
@@ -60,10 +60,9 @@ impl TheWatcher {
         let logging_flag = true;
         let csv_option = false;
         let option = LoggingOptions::ALL;
+        let buffered_data = BufferedData::new();
         let target= (String::new(), String::new());
         // let data_bus_stream= something;
-
-        let buffered_data = BufferedData::new();
 
         Self {
             pid,
@@ -113,17 +112,21 @@ impl TheWatcher {
         //  just conect PC, and then drop that code remotely.
         cfg_select! {
             windows => {
-                let mut string_target_path= (String::new(), String::new();
+                let mut process_name= String::new();
+
                 unsafe{
-                    string_target_path= match get_name_process(){
+                    process_full_name= match get_name_process(){
                         Ok(_string) => { return _string },
-                        Err(e) => { return "".to_string() };
+                        Err(e)      => { return "".to_string() }
                     };
                 };
-                self.target= filter_absolut_path(get_name_process);
+
+                self.target= filter_absolut_path(process_full_name);
             },
+            
             _ => {
                 // @TODO hook a daemon
+                "Asdf"
             }
         };
 
@@ -134,42 +137,42 @@ impl TheWatcher {
         self
     }
 
-    async fn read_data_stream(data_bus_stream: stream) -> Result<Vec<usize>, Box<dyn Error>> {
-        static CAPACITY_LINE: usize= 1024000000;
-        let mut unwrapped_data: Vec<usize> = Vec::with_capacity(CAPACITY_LINE);
+    // async fn read_data_stream(data_bus_stream: stream) -> Result<Vec<usize>, Box<dyn Error>> {
+    //     static CAPACITY_LINE: usize= 1024000000;
+    //     let mut unwrapped_data: Vec<usize> = Vec::with_capacity(CAPACITY_LINE);
 
-        // !TODO if returned err, try to reconn
-        loop{
-            let mut buffer_result: Vec<usize> = Vec::new();
+    //     // !TODO if returned err, try to reconn
+    //     loop{
+    //         let mut buffer_result: Vec<usize> = Vec::new();
             
-            // @TODO https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html
-            let pointer: core::task::Pin<&mut Self>;
-            buffer_result = AsyncRead::poll_read(
-                pointer,
-                data_bus_stream,
-                buffer_result,
-            )?;
+    //         // @TODO https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html
+    //         let pointer: core::task::Pin<&mut Self>;
+    //         buffer_result = AsyncRead::poll_read(
+    //             pointer,
+    //             data_bus_stream,
+    //             buffer_result,
+    //         )?;
 
-            // !TODO define buffer_result max size 1024000000 ~ +5000000)
-            match buffer_result {
-                Ok(data) => {
-                    unwrapped_data= data;
-                    break;
-                }
-                Err(e) => {
-                    return Err("can't get data bus stream".into());
-                }
-            }
-        }
+    //         // !TODO define buffer_result max size 1024000000 ~ +5000000)
+    //         match buffer_result {
+    //             Ok(data) => {
+    //                 unwrapped_data= data;
+    //                 break;
+    //             }
+    //             Err(e) => {
+    //                 return Err("can't get data bus stream".into());
+    //             }
+    //         }
+    //     }
         
-        if unwrapped_data.capacity() >= CAPACITY_LINE {
-            return Ok(unwrapped_data);
-        } else if unwrapped_data.is_empty(){
-            return Err("No data collected".into());
-        }
+    //     if unwrapped_data.capacity() >= CAPACITY_LINE {
+    //         return Ok(unwrapped_data);
+    //     } else if unwrapped_data.is_empty(){
+    //         return Err("No data collected".into());
+    //     }
 
-        Ok(unwrapped_data)
-    }
+    //     Ok(unwrapped_data)
+    // }
 
     fn filtering_data(_stream_data: Vec<usize>) -> String {
         let mut filtered_string = "".to_string();
