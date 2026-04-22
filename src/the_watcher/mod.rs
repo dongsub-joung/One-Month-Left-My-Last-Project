@@ -107,7 +107,7 @@ impl TheWatcher {
         (program_name.to_string(), exe_name.to_string())
     }
     pub fn setting_target(&mut self) -> &mut Self {
-        // If AI can drop some codes like this logic,
+        //  If AI can drop some codes like this logic,
         //  malware do not need anymore :)
         //  just conect PC, and then drop that code remotely.
         cfg_select! {
@@ -215,6 +215,9 @@ impl TheWatcher {
             }
         };
         reulst_title_string
+    }
+    async fn packet_caturing(){
+        
     } 
     pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
@@ -228,12 +231,27 @@ impl TheWatcher {
         let v_titles= get_title(pid);
         
         // logging
-        let stream_data = read_data_stream(self.data_bus_stream);
-        // @TODO unwrap data
+        // let stream_data = read_data_stream(self.data_bus_stream);
+        // // @TODO unwrap data
 
-        let buffered_data= &self.buffered_data;
-        self.buffered_data = BufferedData::from(buffered_data, stream_data);
+        // let buffered_data= &self.buffered_data;
+        // self.buffered_data = BufferedData::from(buffered_data, stream_data);
         
+        let exe_name= self.target.clone();
+        let current_window_tap_name= get_current_windows_title_name();
+
+        // @TODO fillter
+        // packets <- thread 3
+        // exject sender, protoccol, and data.
+        // show data / exe_name  tap_name  protoccol senderIP
+        
+        match self.option {
+            LoggingOptions::NETWORK_ACTIVITY_MODE =>{
+                packet_caturing();
+            },
+            _ =>{}
+        }
+
         self
     }
 

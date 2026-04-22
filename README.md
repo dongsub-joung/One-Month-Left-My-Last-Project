@@ -20,6 +20,8 @@ async fn main() -> Result<()> {
         .await
         .output_txt_path()?
         .csv_format_option(true)?;
+    
+    TheWatcher::RUN();
 
     Ok(())
 }
