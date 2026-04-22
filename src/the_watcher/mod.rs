@@ -256,7 +256,9 @@ impl TheWatcher {
 
         match self.option.clone() {
             LoggingOptions::NETWORK_ACTIVITY_MODE => {
-                packet_caturing();
+                std::thread::spawn(move || {
+                    packet_captureing();
+                });
             }
             _ => {}
         }
