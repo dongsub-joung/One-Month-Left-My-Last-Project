@@ -29,7 +29,7 @@ pub struct TheWatcher {
     output_path: &'static str,
     csv_option: bool,
     option: LoggingOptions,
-    target: String,
+    target: (String, String),
     buffered_data: BufferedData,
     // data_bus_stream: Someting,
 }
@@ -60,7 +60,7 @@ impl TheWatcher {
         let logging_flag = true;
         let csv_option = false;
         let option = LoggingOptions::ALL;
-        let target: String= String::new();
+        let target= (String::new(), String::new());
         // let data_bus_stream= something;
 
         let buffered_data = BufferedData::new();
@@ -111,18 +111,16 @@ impl TheWatcher {
         // If AI can drop some codes like this logic,
         //  malware do not need anymore :)
         //  just conect PC, and then drop that code remotely.
-        let setted_target= cfg_select! {
+        cfg_select! {
             windows => {
-                let mut string_target_path= String::new();
+                let mut string_target_path= (String::new(), String::new();
                 unsafe{
                     string_target_path= match get_name_process(){
                         Ok(_string) => { return _string },
                         Err(e) => { return "".to_string() };
                     };
                 };
-
-                string_target_path= filter_absolut_path(get_name_process);
-                self.target= string_target_path;
+                self.target= filter_absolut_path(get_name_process);
             },
             _ => {
                 // @TODO hook a daemon
