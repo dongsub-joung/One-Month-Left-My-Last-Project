@@ -16,7 +16,7 @@ async fn main() -> Result<()> {
     let mut watcher_a = TheWatcher::new(pid, output_path);
     watcher_a
         .setting_target()
-        .logging(true, LoggingOptions::ALL)
+        .logging(true, LoggingOptions::NETWORK_ACTIVITY_MODE)
         .await
         .output_txt_path()?
         .csv_format_option(true)?;
@@ -36,10 +36,10 @@ step-by-step
 - true(Default)/false
 
 ## LoggingOptions
-- ALL: keyboard, mouse, network resorce
+- NETWORK_ACTIVITY_MODE (Default)
 - KEYBOARD_ONLY 
 - MOUSE_ONLY
-- NETWORK_ACTIVITY_MODE
+- ALL: keyboard, mouse, network resorce
 
 ### enum LoggingOption
 

