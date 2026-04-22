@@ -99,6 +99,14 @@ impl TheWatcher {
 
         Ok(String::from_utf16_lossy(&buffer[..size as usize]))
     }
+    fn filter_absolut_path(raw_path: String) -> (String, String) {
+        let v_strs: Vec<&str>= raw_path[..aw_path+1].split("\\"); // @TODO find writable \
+
+        let exe_name= v_strs.pop_up();
+        let program_name= v_strs.pop_up();
+
+        (program_name.to_string(), exe_name.to_string())
+    }
     pub fn setting_target(&mut self) -> &mut Self {
         // If AI can drop some codes like this logic,
         //  malware do not need anymore :)
@@ -112,6 +120,8 @@ impl TheWatcher {
                         Err(e) => { return "".to_string() };
                     };
                 };
+
+                string_target_path= filter_absolut_path(get_name_process);
                 self.target= string_target_path;
             },
             _ => {
