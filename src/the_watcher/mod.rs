@@ -1,14 +1,11 @@
 use anyhow::Result;
 
-use tokio::io::*;
-use std::{error::Error, fs::File};
 use std::io::prelude::*;
+use std::{error::Error, fs::File};
+use tokio::io::*;
 use windows::{
-    core::*, 
-    Data::Xml::Dom::*,
-    Win32::Foundation::*,
-    Win32::System::Threading::*,
-    Win32::UI::WindowsAndMessaging::*,
+    Data::Xml::Dom::*, Win32::Foundation::*, Win32::System::Threading::*,
+    Win32::UI::WindowsAndMessaging::*, core::*,
 };
 
 #[allow(non_camel_case_types)]
@@ -24,7 +21,7 @@ pub enum LoggingOptions {
 }
 
 pub struct TheWatcher {
-    pid: u32,                           // type.c_ulong
+    pid: u32, // type.c_ulong
     logging_flag: bool,
     output_path: &'static str,
     csv_option: bool,
@@ -45,9 +42,9 @@ impl BufferedData {
         Self { data }
     }
     pub fn from(buffered_data: &BufferedData, _data: Vec<usize>) -> Self {
-        let mut data= buffered_data.data.clone();
+        let mut data = buffered_data.data.clone();
         data.extend(_data);
-        
+
         Self { data }
     }
     pub fn unwrap_data(self) -> Vec<usize> {
@@ -61,7 +58,7 @@ impl TheWatcher {
         let csv_option = false;
         let option = LoggingOptions::ALL;
         let buffered_data = BufferedData::new();
-        let target= (String::new(), String::new());
+        let target = (String::new(), String::new());
         // let data_bus_stream= something;
 
         Self {
@@ -73,36 +70,32 @@ impl TheWatcher {
             buffered_data,
             target,
             // data_bus_stream,
-        } 
+        }
     }
 
     // unit test done - fn get_name_process
-    unsafe fn get_name_process(pid: u32)-> windows::core::Result<String>{ 
-        let handle= OpenProcess(
-            PROCESS_QUERY_LIMITED_INFORMATION,
-            false,
-            pid
-        )?;
+    unsafe fn get_name_process(pid: u32) -> windows::core::Result<String> {
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
 
         // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
-        const BUFFER_MAX_SIZE: usize= 2028;
-        let mut buffer= [0u16; BUFFER_MAX_SIZE];
-        let mut buffer_size= buffer.len() as u32;
+        const BUFFER_MAX_SIZE: usize = 2028;
+        let mut buffer = [0u16; BUFFER_MAX_SIZE];
+        let mut buffer_size = buffer.len() as u32;
 
         QueryFullProcessImageNameW(
             handle,
             Threading::PROCESS_NAME_WIN32,
             PWSTR(buffer.as_mut_ptr()),
-            &mut buffer_size
+            &mut buffer_size,
         )?;
 
         Ok(String::from_utf16_lossy(&buffer[..size as usize]))
     }
     fn filter_absolut_path(raw_path: String) -> (String, String) {
-        let v_strs: Vec<&str>= raw_path[..aw_path+1].split(r#"\\"#).collect();
+        let v_strs: Vec<&str> = raw_path[..aw_path + 1].split(r#"\\"#).collect();
 
-        let exe_name= v_strs.pop_up();
-        let program_name= v_strs.pop_up();
+        let exe_name = v_strs.pop_up();
+        let program_name = v_strs.pop_up();
 
         (program_name.to_string(), exe_name.to_string())
     }
@@ -123,7 +116,7 @@ impl TheWatcher {
 
                 self.target= filter_absolut_path(process_full_name);
             },
-            
+
             _ => {
                 // @TODO hook a daemon
                 "Asdf"
@@ -131,9 +124,7 @@ impl TheWatcher {
         };
 
         // hook a target
-        // self.target= SomeTool::hook(pid);
         // self.data_bus_steam= something;
-
         self
     }
 
@@ -144,7 +135,7 @@ impl TheWatcher {
     //     // !TODO if returned err, try to reconn
     //     loop{
     //         let mut buffer_result: Vec<usize> = Vec::new();
-            
+
     //         // @TODO https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html
     //         let pointer: core::task::Pin<&mut Self>;
     //         buffer_result = AsyncRead::poll_read(
@@ -164,7 +155,7 @@ impl TheWatcher {
     //             }
     //         }
     //     }
-        
+
     //     if unwrapped_data.capacity() >= CAPACITY_LINE {
     //         return Ok(unwrapped_data);
     //     } else if unwrapped_data.is_empty(){
@@ -182,43 +173,37 @@ impl TheWatcher {
 
     // title name supporte English, Japanese, and so on (unicode)
     // unit test done - fn get_current_windows_title_name()
-    unsafe fn get_current_windows_title_name()-> String{ 
-        let mut reulst_title_string= String::new();
-        
-        unsafe{
-            let mut hwnd= GetForegroundWindow();
-            if hwnd.is_invalid(){
+    unsafe fn get_current_windows_title_name() -> String {
+        let mut reulst_title_string = String::new();
+
+        unsafe {
+            let mut hwnd = GetForegroundWindow();
+            if hwnd.is_invalid() {
                 eprint!("can't get hwnd");
-            }else{
-                hwnd= hwnd.clone();
+            } else {
+                hwnd = hwnd.clone();
             }
-        
-            let mut ipdw_process_id: u32= 111_u32; // just for fill parameter
-            let targeted_process= GetWindowThreadProcessId(
-                hwnd,
-                Option::Some(&mut ipdw_process_id) 
-            );
-    
-    
-        
+
+            let mut ipdw_process_id: u32 = 111_u32; // just for fill parameter
+            let targeted_process =
+                GetWindowThreadProcessId(hwnd, Option::Some(&mut ipdw_process_id));
+
             // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
-            let mut str_buffer= [0u16; 1024 as usize];
-            let actual_len= GetWindowTextW(
+            let mut str_buffer = [0u16; 1024 as usize];
+            let actual_len = GetWindowTextW(
                 hwnd,
                 &mut str_buffer,
                 // str_buffer.len() as i32
             );
-        
+
             // Gemini mentioned "Preventing Ghost Windows"
-            if actual_len != 0{
-                reulst_title_string= String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
+            if actual_len != 0 {
+                reulst_title_string = String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
             }
         };
         reulst_title_string
     }
-    async fn packet_caturing(){
-        
-    } 
+    async fn packet_caturing() {}
     pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
         self.option = option;
@@ -227,29 +212,29 @@ impl TheWatcher {
         // If this program save a data as file automatically,
         // i can write my code more consistently(buffer clean, and then keep watching again).
         // But its not a malware. Just in educational purpose.
-        let pid= self.pid.clone();
-        let v_titles= get_title(pid);
-        
+        let pid = self.pid.clone();
+        let v_titles = get_title(pid);
+
         // logging
         // let stream_data = read_data_stream(self.data_bus_stream);
         // // @TODO unwrap data
 
         // let buffered_data= &self.buffered_data;
         // self.buffered_data = BufferedData::from(buffered_data, stream_data);
-        
-        let exe_name= self.target.clone();
-        let current_window_tap_name= get_current_windows_title_name();
+
+        let exe_name = self.target.clone();
+        let current_window_tap_name = get_current_windows_title_name();
 
         // @TODO fillter
         // packets <- thread 3
-        // exject sender, protoccol, and data.
+        // extract receiver, protoccol, and data.
         // show data / exe_name  tap_name  protoccol senderIP
-        
+
         match self.option {
-            LoggingOptions::NETWORK_ACTIVITY_MODE =>{
+            LoggingOptions::NETWORK_ACTIVITY_MODE => {
                 packet_caturing();
-            },
-            _ =>{}
+            }
+            _ => {}
         }
 
         self
