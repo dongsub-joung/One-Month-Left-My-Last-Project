@@ -100,7 +100,7 @@ impl TheWatcher {
         Ok(String::from_utf16_lossy(&buffer[..size as usize]))
     }
     fn filter_absolut_path(raw_path: String) -> (String, String) {
-        let v_strs: Vec<&str>= raw_path[..aw_path+1].split("\\"); // @TODO find writable \
+        let v_strs: Vec<&str>= raw_path[..aw_path+1].split(r#"\\"#).collect();
 
         let exe_name= v_strs.pop_up();
         let program_name= v_strs.pop_up();
