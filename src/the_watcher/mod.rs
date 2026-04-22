@@ -222,7 +222,26 @@ impl TheWatcher {
                 }
 
                 let setted_channel= detalink::channel(&default_interface, Default::default());
-                let (_, mut rx)= match
+                let (_, mut rx)= match setted_channel{
+                    Ok(Ethernet(tx, rx)) => (tx, rx),
+                    Ok(_) => eprint!("unhandled channel type {}", &interface),
+                    Err(e) => { panic!(" Err from the datalink channel"); }
+                };
+
+                loop{
+                    mactch rx.next(){
+                        // if packet have pnet_pacekt::Packet
+                        Ok(packet) => {
+                            if let Some(ethernet_packet)= EthernetPacket::new(packet){
+                                let converted_wire_format= pnet::packet::FromPacket::from_packet(ethernet);
+                                print!("destination: {} | ethertype: {}", converted_wire_format.getdstination(), converted_wire_format.get_ethertype());
+                            }
+                        },
+                        Err(e) =>{
+                            println!("Err while reading: {}", e);
+                        }
+                    }
+                }
             },
             _ => {
                 // @TODO crate lib
