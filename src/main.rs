@@ -6,7 +6,7 @@ mod the_watcher;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let pid = 12436;
+    let pid = 1104;
     let output_path = "./Documents";
 
     println!("--------------------------------------------------------------");
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
 
     watcher_a
         .setting_target()
-        .logging(true, LoggingOptions::ALL)
+        .logging(true, LoggingOptions::NETWORK_ACTIVITY_MODE)
         .await;
         // .output_txt_path(true)?
         // .csv_format_option(true)?;

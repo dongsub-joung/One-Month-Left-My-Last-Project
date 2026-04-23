@@ -1,9 +1,10 @@
 use core::panic;
-use std::*;
-use windows::{
-    Win32::System::Threading::*,
-    core::*,
+use pktmon::{
+    Capture,
+    filter::{PktMonFilter, TransportProtocol},
 };
+use std::*;
+use windows::{Win32::System::Threading::*, core::*};
 
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
@@ -167,63 +168,136 @@ impl TheWatcher {
         filtered_string
     }
 
-    fn packet_captureing(exe_name: (String, String)) {
-        #[cfg(windows)]
-        {
-            let exe_name = exe_name.clone();
+    // fn packet_captureing(exe_name: (String, String)) {
+    //     #[cfg(windows)]
+    //     {
+    //         let exe_name = exe_name.clone();
 
-            fn set_interface(exe_name: &(String, String)) {
-                let v_interfaces = pnet::datalink::interfaces();
-                let _interface = v_interfaces
-                    .iter()
-                    .find(|e| e.is_up() && !e.is_loopback() && !e.ips.is_empty());
+    //         fn set_interface(exe_name: &(String, String)) {
+    //             let v_interfaces = pnet::datalink::interfaces();
+    //             let _interface = v_interfaces
+    //                 .iter()
+    //                 .find(|e| e.is_up() && !e.is_loopback() && !e.ips.is_empty());
 
-                let mut receiver = match _interface {
-                    Some(interface) => {
-                        println!("Found default interface with [{}]", interface.name);
+    //             let mut receiver = match _interface {
+    //                 Some(interface) => {
+    //                     println!("Found default interface with [{}]", interface.name);
 
-                        let setted_channel = pnet_datalink::channel(interface, Default::default());
-                        let (_, rx) = match setted_channel {
-                            Ok(pnet_datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
-                            Ok(_) => panic!("nothing in value"),
-                            Err(e) => panic!("Err: {} from the datalink channel", e),
-                        };
+    //                     let setted_channel = pnet_datalink::channel(interface, Default::default());
+    //                     let (_, rx) = match setted_channel {
+    //                         Ok(pnet_datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
+    //                         Ok(_) => panic!("nothing in value"),
+    //                         Err(e) => panic!("Err: {} from the datalink channel", e),
+    //                     };
 
-                        rx
-                    }
-                    None => panic!("fail to packet_captureing on getting receiver"),
-                };
+    //                     rx
+    //                 }
+    //                 None => panic!("fail to packet_captureing on getting receiver"),
+    //             };
 
-                loop {
-                    match receiver.next() {
-                        Ok(packet) => {
-                            if let Some(ethernet_packet) =
-                                pnet::packet::ethernet::EthernetPacket::new(packet)
-                            {
-                                let converted_wire_format =
-                                    pnet::packet::FromPacket::from_packet(&ethernet_packet);
+    //             loop {
+    //                 match receiver.next() {
+    //                     Ok(packet) => {
+    //                         if let Some(ethernet_packet) =
+    //                             pnet::packet::ethernet::EthernetPacket::new(packet)
+    //                         {
+    //                             let converted_wire_format =
+    //                                 pnet::packet::FromPacket::from_packet(&ethernet_packet);
 
-                                println!(
-                                    "<Active: {}/{}> destination: {} | ethertype: {}",
-                                    exe_name.0, exe_name.1,
-                                    converted_wire_format.destination,
-                                    converted_wire_format.ethertype,
-                                );
-                            }
-                        }
-                        Err(e) => {
-                            println!("Err while reading: {}", e);
-                        }
-                    }
-                }
-            }
+    //                             println!(
+    //                                 "<Active: {}/{}> destination: {} | ethertype: {}",
+    //                                 exe_name.0,
+    //                                 exe_name.1,
+    //                                 converted_wire_format.destination,
+    //                                 converted_wire_format.ethertype,
+    //                             );
+    //                         }
+    //                     }
+    //                     Err(e) => {
+    //                         println!("Err while reading: {}", e);
+    //                     }
+    //                 }
+    //             }
+    //         }
 
-            set_interface(&exe_name);
-        }
-        #[cfg(not(windows))]
-        {
-            // @TODO
-        }
+    //         set_interface(&exe_name);
+    //     }
+    //     #[cfg(not(windows))]
+    //     {
+    //         // @TODO
+    //     }
+    // }
+
+    pub fn packet_captureing_without_nmap(exe_name: (String, String)) {
+        let mut capture_barve = Capture::new().unwrap();
+        let mut capture_chrome = Capture::new().unwrap();
+        let mut capture_firefox = Capture::new().unwrap();
+        
+        let exe_name1= exe_name.clone();
+        let exe_name2= exe_name.clone();
+        let exe_name3= exe_name.clone();
+
+        std::thread::spawn(move || {
+            capture_barve
+                .add_filter(PktMonFilter {
+                    name: "UDP Filter".to_string(),
+                    transport_protocol: Some(TransportProtocol::UDP),
+                    port: 5353.into(), // brave
+
+                    ..PktMonFilter::default()
+                })
+                .unwrap();
+
+            capture_barve.start().unwrap();
+
+            let packet = capture_barve.next_packet().unwrap();
+
+            println!(
+                "<Active: {}/{}> payload: {:?}",
+                exe_name1.0, exe_name1.1, packet.payload,
+            );
+        });
+
+        
+        std::thread::spawn(move || {
+            capture_chrome
+                .add_filter(PktMonFilter {
+                    name: "UDP Filter".to_string(),
+                    transport_protocol: Some(TransportProtocol::UDP),
+                    port: 443.into(), // chrome, but Default Ports: While 80 and 443 are standard
+
+                    ..PktMonFilter::default()
+                })
+                .unwrap();
+
+            capture_chrome.start().unwrap();
+
+            let packet = capture_chrome.next_packet().unwrap();
+            println!(
+                "<Active: {}/{}> payload: {:?}",
+                exe_name2.0, exe_name2.1, packet.payload,
+            );
+        });
+
+        std::thread::spawn(move || {
+            capture_firefox
+                .add_filter(PktMonFilter {
+                    name: "UDP Filter".to_string(),
+                    transport_protocol: Some(TransportProtocol::UDP),
+                    port: 443 .into(), // firefox
+
+                    ..PktMonFilter::default()
+                })
+                .unwrap();
+
+            capture_firefox.start().unwrap();
+
+            let packet = capture_firefox.next_packet().unwrap();
+            println!(
+                "<Active: {}/{}> payload: {:?}",
+                exe_name3.0, exe_name3.1, packet.payload,
+            );
+        });
     }
 
     pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
@@ -237,7 +311,7 @@ impl TheWatcher {
         match &self.option {
             LoggingOptions::NETWORK_ACTIVITY_MODE => {
                 std::thread::spawn(move || {
-                    Self::packet_captureing(exe_name);
+                    Self::packet_captureing_without_nmap(exe_name);
                 });
             }
             _ => {}
@@ -250,64 +324,63 @@ impl TheWatcher {
     }
 }
 
-    // pub fn output_txt_path(&mut self, flag: bool) -> Result<&mut Self> {
-    //     let path = &self.output_path;
-    //     let full_path = format!("{}/output.txt", path);
+// pub fn output_txt_path(&mut self, flag: bool) -> Result<&mut Self> {
+//     let path = &self.output_path;
+//     let full_path = format!("{}/output.txt", path);
 
-    //     match flag {
-    //         true => {
-    //             let mut file = File::create(full_path)?;
+//     match flag {
+//         true => {
+//             let mut file = File::create(full_path)?;
 
-    //             let unwrapped_data = BufferedData::unwrap_data(self.buffered_data);
-    //             let filtered_data = filtering_data(unwrapped_data);
+//             let unwrapped_data = BufferedData::unwrap_data(self.buffered_data);
+//             let filtered_data = filtering_data(unwrapped_data);
 
-    //             file.write_all(filtered_data.as_bytes())?;
-    //         }
-    //         false => {
-    //             // @TODO send data to sender as email
-    //         }
-    //     }
-    //     Ok(self)
-    // }
+//             file.write_all(filtered_data.as_bytes())?;
+//         }
+//         false => {
+//             // @TODO send data to sender as email
+//         }
+//     }
+//     Ok(self)
+// }
 
-    // pub fn csv_format_option(&mut self, flag: bool) -> Result<&mut Self> {
-    //     Ok(self)
-    // }
+// pub fn csv_format_option(&mut self, flag: bool) -> Result<&mut Self> {
+//     Ok(self)
+// }
 
+// async fn read_data_stream(data_bus_stream: stream) -> Result<Vec<usize>, Box<dyn Error>> {
+//     static CAPACITY_LINE: usize= 1024000000;
+//     let mut unwrapped_data: Vec<usize> = Vec::with_capacity(CAPACITY_LINE);
 
-    // async fn read_data_stream(data_bus_stream: stream) -> Result<Vec<usize>, Box<dyn Error>> {
-    //     static CAPACITY_LINE: usize= 1024000000;
-    //     let mut unwrapped_data: Vec<usize> = Vec::with_capacity(CAPACITY_LINE);
+//     // !TODO if returned err, try to reconn
+//     loop{
+//         let mut buffer_result: Vec<usize> = Vec::new();
 
-    //     // !TODO if returned err, try to reconn
-    //     loop{
-    //         let mut buffer_result: Vec<usize> = Vec::new();
+//         // @TODO https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html
+//         let pointer: core::task::Pin<&mut Self>;
+//         buffer_result = AsyncRead::poll_read(
+//             pointer,
+//             data_bus_stream,
+//             buffer_result,
+//         )?;
 
-    //         // @TODO https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html
-    //         let pointer: core::task::Pin<&mut Self>;
-    //         buffer_result = AsyncRead::poll_read(
-    //             pointer,
-    //             data_bus_stream,
-    //             buffer_result,
-    //         )?;
+//         // !TODO define buffer_result max size 1024000000 ~ +5000000)
+//         match buffer_result {
+//             Ok(data) => {
+//                 unwrapped_data= data;
+//                 break;
+//             }
+//             Err(e) => {
+//                 return Err("can't get data bus stream".into());
+//             }
+//         }
+//     }
 
-    //         // !TODO define buffer_result max size 1024000000 ~ +5000000)
-    //         match buffer_result {
-    //             Ok(data) => {
-    //                 unwrapped_data= data;
-    //                 break;
-    //             }
-    //             Err(e) => {
-    //                 return Err("can't get data bus stream".into());
-    //             }
-    //         }
-    //     }
+//     if unwrapped_data.capacity() >= CAPACITY_LINE {
+//         return Ok(unwrapped_data);
+//     } else if unwrapped_data.is_empty(){
+//         return Err("No data collected".into());
+//     }
 
-    //     if unwrapped_data.capacity() >= CAPACITY_LINE {
-    //         return Ok(unwrapped_data);
-    //     } else if unwrapped_data.is_empty(){
-    //         return Err("No data collected".into());
-    //     }
-
-    //     Ok(unwrapped_data)
-    // }
+//     Ok(unwrapped_data)
+// }
