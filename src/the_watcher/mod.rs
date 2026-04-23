@@ -161,7 +161,7 @@ impl TheWatcher {
         self
     }
 
-    fn filtering_data(_stream_data: Vec<usize>) -> String {
+    fn filtering_data(_stream_data: &Vec<usize>) -> String {
         let mut filtered_string = String::new();
 
         filtered_string
@@ -172,7 +172,7 @@ impl TheWatcher {
         {
             let exe_name = exe_name.clone();
 
-            fn set_interface(exe_name: (String, String)) {
+            fn set_interface(exe_name: &(String, String)) {
                 let v_interfaces = pnet::datalink::interfaces();
                 let _interface = v_interfaces
                     .iter()
@@ -181,6 +181,7 @@ impl TheWatcher {
                 let mut receiver = match _interface {
                     Some(interface) => {
                         println!("Found default interface with [{}]", interface.name);
+
                         let setted_channel = pnet_datalink::channel(interface, Default::default());
                         let (_, rx) = match setted_channel {
                             Ok(pnet_datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
@@ -217,7 +218,7 @@ impl TheWatcher {
                 }
             }
 
-            set_interface(exe_name);
+            set_interface(&exe_name);
         }
         #[cfg(not(windows))]
         {
