@@ -41,13 +41,9 @@ struct NetworkPacketData {
 
 trait BufferedData {
     fn new() -> Self;
-
-    // @TODO buffered_data wiil have Generic type T: BlablaData
-    //       _data will have Generic type         U: something origi data type
-    fn from(buffered_data: Data, _data: Vec<usize>) -> Self;
-
-    // @TODO return value will have Generic type T: something origin data type
+    fn from(buffered_data: NetworkPacketData, _data: Vec<usize>) -> Self;
     fn unwrap_data(self) -> Vec<usize>;
+    fn borrowing(self) -> &NetworkPacketData::data;
 }
 
 impl BufferedData for NetworkPacketData {
@@ -55,8 +51,8 @@ impl BufferedData for NetworkPacketData {
         let data: Vec<usize> = Default::default();
         Self { data }
     }
-    fn from(buffered_data: &BufferedData, _data: Vec<usize>) -> Self {
-        let mut data = buffered_data.data.clone();
+    fn from(buffered_data: &NetWorkPacketData, _data: Vec<usize>) -> Self {
+        let mut data = buffered_data.data;
         data.extend(_data);
 
         Self { data }
@@ -64,7 +60,16 @@ impl BufferedData for NetworkPacketData {
     fn unwrap_data(self) -> Vec<usize> {
         self.data
     }
+    fn borrowing(self) -> &NetworkPacketData::data {
+        &self.data
+    }
 }
+
+// @TODO
+struct KeyboardData {}
+impl BufferedData for KeyboardData {}
+struct MouseData {}
+impl BufferedData for MouseData {}
 
 impl TheWatcher {
     pub fn new(pid: u32, output_path: &'static str) -> Self {
