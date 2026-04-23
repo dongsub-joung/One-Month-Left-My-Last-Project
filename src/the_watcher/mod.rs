@@ -33,7 +33,7 @@ pub struct TheWatcher {
     // data_bus_stream: Someting,
 }
 
-struct Data {
+struct NetworkPacketData {
     // date: Date
     data: Vec<usize>,
     // sender_email: &' static str
@@ -42,23 +42,26 @@ struct Data {
 trait BufferedData {
     fn new() -> Self;
 
-    // @TODO _data will have Generic type
+    // @TODO buffered_data wiil have Generic type T: BlablaData
+    //       _data will have Generic type         U: something origi data type
     fn from(buffered_data: Data, _data: Vec<usize>) -> Self;
+
+    // @TODO return value will have Generic type T: something origin data type
     fn unwrap_data(self) -> Vec<usize>;
 }
 
-impl BufferedData {
-    pub fn new() -> Self {
-        let data: Vec<usize> = Vec::new();
+impl BufferedData for NetworkPacketData {
+    fn new() -> Self {
+        let data: Vec<usize> = Default::default();
         Self { data }
     }
-    pub fn from(buffered_data: &BufferedData, _data: Vec<usize>) -> Self {
+    fn from(buffered_data: &BufferedData, _data: Vec<usize>) -> Self {
         let mut data = buffered_data.data.clone();
         data.extend(_data);
 
         Self { data }
     }
-    pub fn unwrap_data(self) -> Vec<usize> {
+    fn unwrap_data(self) -> Vec<usize> {
         self.data
     }
 }
