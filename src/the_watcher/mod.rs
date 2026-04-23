@@ -22,19 +22,8 @@ pub enum LoggingOptions {
     ALL,
 }
 
-pub struct TheWatcher {
-    pid: u32, // type.c_ulong
-    logging_flag: bool,
-    output_path: &'static str,
-    csv_option: bool,
-    option: LoggingOptions,
-    buffered_data: BufferedData,
-    target: (String, String),
-    // data_bus_stream: Someting,
-}
-
 struct Data<T> {
-    timestamp: std::time::systemTime,
+    timestamp: std::time::SystemTime,
     inner_data: T,
 }
 
@@ -48,10 +37,11 @@ trait BufferedData {
     type DataType;
 
     fn new() -> Self;
-    fn from(buffered_data: NetworkPacketData, _data: Vec<usize>) -> Self;
-    fn unwrap_data(self) -> &Self::Payload;
-    fn borrowing(self) -> &NetworkPacketData::data;
+    // fn from(buffered_data: NetworkPacketData, _data: Vec<usize>) -> Self;
+    fn unwrap_data(self) -> Data<Vec<usize>>;
+    fn borrowing(&self) -> &Self;
 }
+
 
 impl BufferedData for NetworkPacketData {
     // @TODO will have Packet type
@@ -59,32 +49,45 @@ impl BufferedData for NetworkPacketData {
 
     fn new() -> Self {
         let timestamp = std::time::SystemTime::now();
-        let mut inner_data: Vec<usize> = Vec::new();
+        let inner_data: Vec<usize> = Vec::new();
+
         let packet_data = Data {
             timestamp,
             inner_data,
         };
-        Self { packet_data }
-    }
-    fn from(buffered_data: &NetWorkPacketData, _data: Vec<usize>) -> Self {
-        let mut packet_data = buffered_data.data;
-        packet_data.inner_data.extend(_data);
 
         Self { packet_data }
     }
-    fn unwrap_data(self) -> Vec<usize> {
-        self.packet_data.inner_data
+    // fn from(buffered_data: &Self, _data: Vec<usize>) -> Self {
+    //     let mut packet_data = buffered_data.packet_data;
+    //     packet_data.inner_data.extend(_data);
+
+    //     Self { packet_data }
+    // }
+    fn unwrap_data(self) -> Data<Vec<usize>> {
+        self.packet_data
     }
-    fn borrowing(&self) -> &Vec<usize> {
-        &self.packet_data_inner_data
+    fn borrowing(&self) -> &NetworkPacketData {
+        &self
     }
 }
 
 // @TODO
-struct KeyboardData {}
-impl BufferedData for KeyboardData {}
-struct MouseData {}
-impl BufferedData for MouseData {}
+// struct KeyboardData {}
+// impl BufferedData for KeyboardData {}
+// struct MouseData {}
+// impl BufferedData for MouseData {}
+
+pub struct TheWatcher {
+    pid: u32, // type.c_ulong
+    logging_flag: bool,
+    output_path: &'static str,
+    csv_option: bool,
+    option: LoggingOptions,
+    buffered_data: BufferedData,
+    target: (String, String),
+    // data_bus_stream: Someting,
+}
 
 impl TheWatcher {
     pub fn new(pid: u32, output_path: &'static str) -> Self {
@@ -224,7 +227,7 @@ impl TheWatcher {
 
             // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
             const BUFFER_MAX_SIZE: u16 = 2048_u16;
-            let mut str_buffer = [0u16; BuFFER_MAX_SIZE as usize];
+            let mut str_buffer = [0u16; BUFFER_MAX_SIZE as usize];
             let actual_len = GetWindowTextW(
                 hwnd,
                 &mut str_buffer,
@@ -239,7 +242,7 @@ impl TheWatcher {
         reulst_title_string
     }
     fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String) {
-        cfg_select! {
+        let _= cfg_select!{
             windows =>{
                 // @TODO crate windows_sys
                 let mut default_interface: Vec<NetworkInterface>;
@@ -284,6 +287,7 @@ impl TheWatcher {
             },
             _ => {
                 // @TODO crate lib
+                "Asdf"
             }
         }
     }
@@ -301,8 +305,8 @@ impl TheWatcher {
         // let stream_data = read_data_stream(self.data_bus_stream);
         // // @TODO unwrap data
 
-        // let buffered_data= &self.buffered_data;
-        // self.buffered_data = BufferedData::from(buffered_data, stream_data);
+        // 
+        // self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
 
         let exe_name = self.target.clone();
         let current_window_tap_name = get_current_windows_title_name();

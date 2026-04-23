@@ -26,5 +26,7 @@ async fn main() -> Result<()> {
         .output_txt_path(true)?
         .csv_format_option(true)?;
 
+    //  watcher_a::run();
+
     Ok(())
 }
