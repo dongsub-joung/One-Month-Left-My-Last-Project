@@ -238,7 +238,7 @@ impl TheWatcher {
         };
         reulst_title_string
     }
-    fn packet_caturing() {
+    fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String) {
         cfg_select! {
             windows =>{
                 // @TODO crate windows_sys
@@ -267,8 +267,13 @@ impl TheWatcher {
                         Ok(packet) => {
                             if let Some(ethernet_packet)= EthernetPacket::new(packet){
                                 let converted_wire_format= pnet::packet::FromPacket::from_packet(ethernet_packet);
-                                println!("destination: {} | ethertype: {}", converted_wire_format.getdstination(), converted_wire_format.get_ethertype());
-                                println!("")
+
+                                // @TODO std::format
+                                println!("Active:{}/{}: {} destination: {} | ethertype: {}",
+                                    exe_name.0 , exe_name.1,
+                                    current_windows_tap_name,
+                                    converted_wire_format.getdstination(),
+                                    converted_wire_format.get_ethertype());
                             }
                         },
                         Err(e) =>{
