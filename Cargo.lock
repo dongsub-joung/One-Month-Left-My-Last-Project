@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert-type-eq",
+ "etherparse",
  "libc",
  "pnet",
  "pnet_datalink",
@@ -31,6 +32,12 @@ name = "anyhow"
 version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
+
+[[package]]
+name = "arrayvec"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
 name = "assert-type-eq"
@@ -147,6 +154,15 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys",
+]
+
+[[package]]
+name = "etherparse"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ac016aaf11dfe643edcd088a166234bfcb72e7f06691abfcf21e9af524037f4"
+dependencies = [
+ "arrayvec",
 ]
 
 [[package]]
