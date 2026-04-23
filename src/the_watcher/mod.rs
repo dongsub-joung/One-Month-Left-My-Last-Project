@@ -84,7 +84,7 @@ pub struct TheWatcher {
     output_path: &'static str,
     csv_option: bool,
     option: LoggingOptions,
-    buffered_data: BufferedData,
+    buffered_data: NetworkPacketData,
     target: (String, String),
     // data_bus_stream: Someting,
 }
@@ -110,45 +110,46 @@ impl TheWatcher {
         }
     }
 
-    // unit test done - fn get_name_process
-    unsafe fn get_name_process(pid: u32) -> windows::core::Result<String> {
-        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
-
-        // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
-        const BUFFER_MAX_SIZE: usize = 2028;
-        let mut buffer = [0u16; BUFFER_MAX_SIZE];
-        let mut buffer_size = buffer.len() as u32;
-
-        QueryFullProcessImageNameW(
-            handle,
-            Threading::PROCESS_NAME_WIN32,
-            PWSTR(buffer.as_mut_ptr()),
-            &mut buffer_size,
-        )?;
-
-        Ok(String::from_utf16_lossy(&buffer[..size as usize]))
-    }
-    fn filter_absolut_path(raw_path: String) -> (String, String) {
-        let v_strs: Vec<&str> = raw_path[..aw_path + 1].split(r#"\\"#).collect();
-
-        let exe_name = v_strs.pop_up();
-        let program_name = v_strs.pop_up();
-
-        (program_name.to_string(), exe_name.to_string())
-    }
     pub fn setting_target(&mut self) -> &mut Self {
         //  If AI can drop some codes like this logic,
         //  malware do not need anymore :)
         //  just conect PC, and then drop that code remotely.
         cfg_select! {
             windows => {
-                let mut process_name= String::new();
+                
+                
+                // unit test done - fn get_name_process
+                unsafe fn get_name_process(pid: u32) -> windows::core::Result<String> {
+                    unsafe{
+                        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
+                        
+                        // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
+                        const BUFFER_MAX_SIZE: usize = 2028;
+                        let mut buffer = [0u16; BUFFER_MAX_SIZE];
+                        let mut buffer_size = buffer.len() as u32;
+                
+                        QueryFullProcessImageNameW(
+                            handle,
+                             windows::Win32::System::Threading::PROCESS_NAME_WIN32,
+                            PWSTR(buffer.as_mut_ptr()),
+                            &mut buffer_size,
+                        )?;
+                
+                        Ok(String::from_utf16_lossy(&buffer[..buffer_size as usize]))
+                    }
+                }
 
+                fn filter_absolut_path(raw_path: String) -> (String, String) {
+                    let mut v_strs: Vec<&str> = raw_path[..raw_path.len() + 1].split(r#"\\"#).collect();
+               
+                    let exe_name = v_strs.pop().expect("fail to unwrap at exe_name");
+                    let program_name = v_strs.pop().expect("fail to unwrap at program_name");
+                    (program_name.to_string(), exe_name.to_string())
+                }
+
+                let mut process_full_name= String::new();
                 unsafe{
-                    process_full_name= match get_name_process(){
-                        Ok(_string) => { return _string },
-                        Err(e)      => { return "".to_string() }
-                    };
+                    process_full_name= get_name_process(self.pid).expect("fail to fn get name to process");
                 };
 
                 self.target= filter_absolut_path(process_full_name);
