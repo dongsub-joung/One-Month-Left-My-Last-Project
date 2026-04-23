@@ -33,35 +33,45 @@ pub struct TheWatcher {
     // data_bus_stream: Someting,
 }
 
+struct Data<T> {
+    timestamp: u64,
+    inner_data: T,
+}
+
 struct NetworkPacketData {
     // date: Date
-    data: Vec<usize>,
+    packet_data: Data<Vec<usize>>,
     // sender_email: &' static str
 }
 
 trait BufferedData {
+    type Payload;
+
     fn new() -> Self;
     fn from(buffered_data: NetworkPacketData, _data: Vec<usize>) -> Self;
-    fn unwrap_data(self) -> Vec<usize>;
+    fn unwrap_data(self) -> &Self::Payload;
     fn borrowing(self) -> &NetworkPacketData::data;
 }
 
 impl BufferedData for NetworkPacketData {
+    type Payload = Vec<usize>;
+
     fn new() -> Self {
-        let data: Vec<usize> = Default::default();
-        Self { data }
+        let mut v: Vec<usize> = Vec::new();
+        let packet_data = Data { v };
+        Self { packet_data }
     }
     fn from(buffered_data: &NetWorkPacketData, _data: Vec<usize>) -> Self {
-        let mut data = buffered_data.data;
+        let mut packet_data = buffered_data.data;
         data.extend(_data);
 
-        Self { data }
+        Self { packet_data }
     }
     fn unwrap_data(self) -> Vec<usize> {
-        self.data
+        self.packet_data.inner_data
     }
-    fn borrowing(self) -> &NetworkPacketData::data {
-        &self.data
+    fn borrowing(self) -> &Vec<usize> {
+        &self.packet_data_inner_data
     }
 }
 
