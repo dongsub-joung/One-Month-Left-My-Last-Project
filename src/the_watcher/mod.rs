@@ -269,7 +269,7 @@ impl TheWatcher {
                                 let converted_wire_format= pnet::packet::FromPacket::from_packet(ethernet_packet);
 
                                 // @TODO std::format
-                                println!("Active:{}/{}: {} destination: {} | ethertype: {}",
+                                println!("<Active: {}/{}: {}> destination: {} | ethertype: {}",
                                     exe_name.0 , exe_name.1,
                                     current_windows_tap_name,
                                     converted_wire_format.getdstination(),
@@ -315,7 +315,7 @@ impl TheWatcher {
         match self.option.clone() {
             LoggingOptions::NETWORK_ACTIVITY_MODE => {
                 std::thread::spawn(move || {
-                    packet_captureing();
+                    packet_captureing(exe_name, current_windows_tap_name);
                 });
             }
             _ => {}
