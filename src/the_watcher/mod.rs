@@ -244,29 +244,38 @@ impl TheWatcher {
         reulst_title_string
     }
     fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String) {
-        let _= cfg_select!{
-            windows =>{
-                // @TODO crate windows_sys
-                let mut default_interface: Vec<NetworkInterface>;
-                {
-                    let v_interfaces= pnet::datalink::interfaces();
-                    default_interface= v_interfaces
-                        .iter()
-                        .find(|e| e.is_up && !e.is_loopback() & !e.ips.is_empty());
-                    match &default_interfcae{
-                        Some(interface) => {println!("Found default intercae wiht [{}]", interface.name)},
-                        None => println!("Erro while finding the dfault interface");
+        cfg_select!{
+            windows => {
+                fn set_interface(){
+                    // @TODO crate windows_sys
+                    let mut default_interface: Vec<NetworkInterface>;
+                    {
+                        let v_interfaces= pnet::datalink::interfaces();
+                        default_interface= v_interfaces
+                            .iter()
+                            .find(|e| e.is_up && !e.is_loopback() & !e.ips.is_empty());
+                        match &default_interfcae{
+                            Some(interface) => {println!("Found default intercae wiht [{}]", interface.name)},
+                            None => { println!("Erro while finding the dfault interface") },
+                        }
                     }
                 }
 
-                let setted_channel= detalink::channel(&default_interface, Default::default());
-                let (_, mut rx)= match setted_channel{
-                    Ok(Ethernet(tx, rx)) => (tx, rx),
-                    Ok(_) => eprint!("unhandled channel type {}", &interface),
-                    Err(e) => { panic!(" Err from the datalink channel"); }
-                };
+                // @TODO fix return type
+                fn set_channel() -> detalink::channel {
+                    let setted_channel= detalink::channel(&default_interface, Default::default());
+                    let (_, mut rx)= match setted_channel{
+                        Ok(Ethernet(tx, rx)) => (tx, rx),
+                        Ok(_) => eprint!("unhandled channel type {}", &interface),
+                        Err(e) => { panic!(" Err from the datalink channel"); }
+                    };
+
+                    rx
+                }
 
                 loop{
+                    let mut rx= set_channel();
+
                     mactch rx.next(){
                         // if packet have pnet_pacekt::Packet
                         Ok(packet) => {
@@ -311,7 +320,7 @@ impl TheWatcher {
         // self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
 
         let exe_name = self.target.clone();
-        let current_window_tap_name = get_current_windows_title_name(self);
+        let current_window_tap_name = get_current_windows_title_name(&self);
 
         // @TODO fillter
         // packets <- thread 3
