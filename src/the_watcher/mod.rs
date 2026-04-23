@@ -1,8 +1,8 @@
 use anyhow::Result;
 
+use core::panic;
 use libc::{AF_PACKET, ETH_P_ALL, SOCK_RAW, socket};
 use pnet::*;
-use core::panic;
 use std::io::prelude::*;
 use std::{error::Error, fs::File};
 use tokio::io::*;
@@ -10,7 +10,6 @@ use windows::{
     Data::Xml::Dom::*, Win32::Foundation::*, Win32::System::Threading::*,
     Win32::UI::WindowsAndMessaging::*, core::*,
 };
-
 
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
@@ -43,7 +42,6 @@ trait BufferedData {
     fn unwrap_data(self) -> Data<Vec<usize>>;
     fn borrowing(&self) -> &Self;
 }
-
 
 impl BufferedData for NetworkPacketData {
     // @TODO will have Packet type
@@ -122,26 +120,26 @@ impl TheWatcher {
                 unsafe fn get_name_process(pid: u32) -> windows::core::Result<String> {
                     unsafe{
                         let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
-                        
+
                         // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
                         const BUFFER_MAX_SIZE: usize = 2028;
                         let mut buffer = [0u16; BUFFER_MAX_SIZE];
                         let mut buffer_size = buffer.len() as u32;
-                
+
                         QueryFullProcessImageNameW(
                             handle,
                              windows::Win32::System::Threading::PROCESS_NAME_WIN32,
                             PWSTR(buffer.as_mut_ptr()),
                             &mut buffer_size,
                         )?;
-                
+
                         Ok(String::from_utf16_lossy(&buffer[..buffer_size as usize]))
                     }
                 }
 
                 fn filter_absolut_path(raw_path: String) -> (String, String) {
                     let mut v_strs: Vec<&str> = raw_path[..raw_path.len() + 1].split(r#"\\"#).collect();
-               
+
                     let exe_name = v_strs.pop().expect("fail to unwrap at exe_name");
                     let program_name = v_strs.pop().expect("fail to unwrap at program_name");
                     (program_name.to_string(), exe_name.to_string())
@@ -209,42 +207,11 @@ impl TheWatcher {
         filtered_string
     }
 
-    // title name supporte English, Japanese, and so on (unicode)
-    // unit test done - fn get_current_windows_title_name()
-    unsafe fn get_current_windows_title_name(the_watcher: &mut TheWatcher) -> String {
-        let mut reulst_title_string = String::new();
 
-        unsafe {
-            let mut hwnd = GetForegroundWindow();
-            if hwnd.is_invalid() {
-                eprint!("can't get hwnd");
-            } else {
-                hwnd = hwnd.clone();
-            }
-
-            let mut ipdw_process_id: u32 = 111_u32; // just for fill parameter
-            let targeted_process =
-                GetWindowThreadProcessId(hwnd, Option::Some(&mut ipdw_process_id));
-            the_watcher.pid= targeted_process;
-
-            // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
-            const BUFFER_MAX_SIZE: u16 = 2048_u16;
-            let mut str_buffer = [0u16; BUFFER_MAX_SIZE as usize];
-            let actual_len = GetWindowTextW(
-                hwnd,
-                &mut str_buffer,
-                // str_buffer.len() as i32
-            );
-
-            // Gemini mentioned "Preventing Ghost Windows"
-            if actual_len != 0 {
-                reulst_title_string = String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
-            }
-        };
-        reulst_title_string
-    }
-    fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String){
-        cfg_select!{
+  
+ 
+    fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String) {
+        cfg_select! {
             windows => {
                 let exe_name= exe_name.clone();
                 let current_windows_tap_name= current_windows_tap_name.clone();
@@ -316,18 +283,50 @@ impl TheWatcher {
         // let stream_data = read_data_stream(self.data_bus_stream);
         // // @TODO unwrap data
 
-        // 
+        //
         // self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
 
         let exe_name = self.target.clone();
-        let current_window_tap_name = get_current_windows_title_name(&self);
+
+        // unit test done - fn get_current_windows_title_name()
+        let current_window_tap_name = unsafe {
+            let mut reulst_title_string = String::new();
+
+            let mut hwnd = GetForegroundWindow();
+            if hwnd.is_invalid() {
+                eprint!("can't get hwnd");
+            } else {
+                hwnd = hwnd.clone();
+            }
+
+            let mut ipdw_process_id: u32 = 111_u32; // just for fill parameter
+            let targeted_process =
+                GetWindowThreadProcessId(hwnd, Option::Some(&mut ipdw_process_id));
+            self.pid = targeted_process;
+
+            // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
+            const BUFFER_MAX_SIZE: u16 = 2048_u16;
+            let mut str_buffer = [0u16; BUFFER_MAX_SIZE as usize];
+            let actual_len = GetWindowTextW(
+                hwnd,
+                &mut str_buffer,
+                // str_buffer.len() as i32
+            );
+
+            // Gemini mentioned "Preventing Ghost Windows"
+            if actual_len != 0 {
+                reulst_title_string = String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
+            }
+
+            reulst_title_string
+        };
 
         // @TODO fillter
         // packets <- thread 3
         // extract receiver, protoccol, and data.
         // show data / exe_name  tap_name  protoccol senderIP
 
-        match self.option.clone() {
+        match &self.option {
             LoggingOptions::NETWORK_ACTIVITY_MODE => {
                 std::thread::spawn(move || {
                     packet_captureing(exe_name, current_windows_tap_name);
@@ -339,27 +338,27 @@ impl TheWatcher {
         self
     }
 
-    pub fn output_txt_path(&mut self, flag: bool) -> Result<&mut Self> {
-        let path = &self.output_path;
-        let full_path = format!("{}/output.txt", path);
+    // pub fn output_txt_path(&mut self, flag: bool) -> Result<&mut Self> {
+    //     let path = &self.output_path;
+    //     let full_path = format!("{}/output.txt", path);
 
-        match flag {
-            true => {
-                let mut file = File::create(full_path)?;
+    //     match flag {
+    //         true => {
+    //             let mut file = File::create(full_path)?;
 
-                let unwrapped_data = BufferedData::unwrap_data(self.buffered_data);
-                let filtered_data = filtering_data(unwrapped_data);
+    //             let unwrapped_data = BufferedData::unwrap_data(self.buffered_data);
+    //             let filtered_data = filtering_data(unwrapped_data);
 
-                file.write_all(filtered_data.as_bytes())?;
-            }
-            false => {
-                // @TODO send data to sender as email
-            }
-        }
-        Ok(self)
-    }
+    //             file.write_all(filtered_data.as_bytes())?;
+    //         }
+    //         false => {
+    //             // @TODO send data to sender as email
+    //         }
+    //     }
+    //     Ok(self)
+    // }
 
-    pub fn csv_format_option(&mut self, flag: bool) -> Result<&mut Self> {
-        Ok(self)
-    }
+    // pub fn csv_format_option(&mut self, flag: bool) -> Result<&mut Self> {
+    //     Ok(self)
+    // }
 }
