@@ -10,7 +10,6 @@ use windows::{
     Win32::UI::WindowsAndMessaging::*, core::*,
 };
 
-use crate::the_watcher;
 
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
@@ -248,13 +247,14 @@ impl TheWatcher {
             windows => {
                 fn set_interface(){
                     // @TODO crate windows_sys
-                    let mut default_interface: Vec<NetworkInterface>;
+                    let default_interface: Option<&pnet::datalink::NetworkInterface>;
                     {
                         let v_interfaces= pnet::datalink::interfaces();
                         default_interface= v_interfaces
                             .iter()
-                            .find(|e| e.is_up && !e.is_loopback() & !e.ips.is_empty());
-                        match &default_interfcae{
+                            .find(|e| e.is_up() && !e.is_loopback() & !e.ips.is_empty());
+
+                        match default_interface {
                             Some(interface) => {println!("Found default intercae wiht [{}]", interface.name)},
                             None => { println!("Erro while finding the dfault interface") },
                         }
