@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use libc::{AF_PACKET, ETH_P_ALL, SOCK_RAW, socket};
 use pnet::*;
+use core::panic;
 use std::io::prelude::*;
 use std::{error::Error, fs::File};
 use tokio::io::*;
@@ -242,56 +243,55 @@ impl TheWatcher {
         };
         reulst_title_string
     }
-    fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String) {
+    fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String){
         cfg_select!{
             windows => {
-                fn set_interface(){
-                    // @TODO crate windows_sys
-                    let default_interface: Option<&pnet::datalink::NetworkInterface>;
+                let exe_name= exe_name.clone();
+                let current_windows_tap_name= current_windows_tap_name.clone();
+
+                fn set_interface(exe_name: (String, String), current_windows_tap_name: String){
+                    let default_interface: &pnet::datalink::NetworkInterface;
+
+
                     {
                         let v_interfaces= pnet::datalink::interfaces();
-                        default_interface= v_interfaces
+                        let _interface= v_interfaces
                             .iter()
                             .find(|e| e.is_up() && !e.is_loopback() & !e.ips.is_empty());
 
-                        match default_interface {
-                            Some(interface) => {println!("Found default intercae wiht [{}]", interface.name)},
-                            None => { println!("Erro while finding the dfault interface") },
-                        }
-                    }
-                }
+                        let mut receiver= match _interface {
+                            Some(interface) => {
+                                println!("Found default intercae wiht [{}]", interface.name);
+                                let setted_channel= pnet_datalink::channel(interface, Default::default());
+                                let (_ , rx)= match setted_channel{
+                                    Ok(pnet_datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
+                                    Ok(_) =>  { panic!("nothing in value") },
+                                    Err(e) => { panic!("Err: {} from the datalink channel", e); }
+                                };
 
-                // @TODO fix return type
-                fn set_channel() -> detalink::channel {
-                    let setted_channel= detalink::channel(&default_interface, Default::default());
-                    let (_, mut rx)= match setted_channel{
-                        Ok(Ethernet(tx, rx)) => (tx, rx),
-                        Ok(_) => eprint!("unhandled channel type {}", &interface),
-                        Err(e) => { panic!(" Err from the datalink channel"); }
-                    };
+                                rx
+                            },
+                            None => { panic!("fail to packet_captureing on getting receiver") },
+                        };
 
-                    rx
-                }
+                        loop{
+                            match receiver.next(){
+                                Ok(packet) => {
+                                    if let Some(ethernet_packet)= pnet::packet::ethernet::EthernetPacket::new(packet){
+                                        let converted_wire_format= pnet::packet::FromPacket::from_packet(&ethernet_packet);
 
-                loop{
-                    let mut rx= set_channel();
-
-                    mactch rx.next(){
-                        // if packet have pnet_pacekt::Packet
-                        Ok(packet) => {
-                            if let Some(ethernet_packet)= EthernetPacket::new(packet){
-                                let converted_wire_format= pnet::packet::FromPacket::from_packet(ethernet_packet);
-
-                                // @TODO std::format
-                                println!("<Active: {}/{}: {}> destination: {} | ethertype: {}",
-                                    exe_name.0 , exe_name.1,
-                                    current_windows_tap_name,
-                                    converted_wire_format.getdstination(),
-                                    converted_wire_format.get_ethertype());
+                                        // @TODO std::format
+                                        println!("<Active: {}/{}: {}> destination: {} | ethertype: {}",
+                                            exe_name.0 , exe_name.1,
+                                            current_windows_tap_name,
+                                            converted_wire_format.destination,
+                                            converted_wire_format.ethertype,
+                                    )};
+                                },
+                                Err(e) =>{
+                                    println!("Err while reading: {}", e);
+                                }
                             }
-                        },
-                        Err(e) =>{
-                            println!("Err while reading: {}", e);
                         }
                     }
                 }

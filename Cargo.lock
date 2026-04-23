@@ -10,7 +10,10 @@ dependencies = [
  "assert-type-eq",
  "libc",
  "pnet",
+ "pnet_datalink",
  "rdev",
+ "rgon-pnet",
+ "rgon-pnet-datalink",
  "tokio",
  "windows",
 ]
@@ -436,6 +439,33 @@ name = "regex-syntax"
 version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
+
+[[package]]
+name = "rgon-pnet"
+version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "599bb785690a019d5766a893e524738078d4aac0015d76851ac3d42b75fbe862"
+dependencies = [
+ "ipnetwork",
+ "pnet_base",
+ "pnet_packet",
+ "pnet_sys",
+ "pnet_transport",
+ "rgon-pnet-datalink",
+]
+
+[[package]]
+name = "rgon-pnet-datalink"
+version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99b199a9abf16789cfe1404cdcf64eaae813a4dd86d4b21cbdb7d8eea7f58c60"
+dependencies = [
+ "ipnetwork",
+ "libc",
+ "pnet_base",
+ "pnet_sys",
+ "winapi",
+]
 
 [[package]]
 name = "scopeguard"
