@@ -6,8 +6,8 @@ mod the_watcher;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let pid = 111;
-    let output_path = "./dir";
+    let pid = 12436;
+    let output_path = "./Documents";
 
     println!("--------------------------------------------------------------");
     println!("d888888b  .d8b.  d888888b .d8888. db    db db    db  .d8b.");
@@ -23,9 +23,9 @@ async fn main() -> Result<()> {
     watcher_a
         .setting_target()
         .logging(true, LoggingOptions::ALL)
-        .await
-        .output_txt_path(true)?
-        .csv_format_option(true)?;
+        .await;
+        // .output_txt_path(true)?
+        // .csv_format_option(true)?;
 
     // watcher_a.run_without_logging();
 

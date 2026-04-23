@@ -1,14 +1,8 @@
-use anyhow::Result;
-
 use core::panic;
-use libc::{AF_PACKET, ETH_P_ALL, SOCK_RAW, socket};
-use pnet::*;
-use std::io::prelude::*;
-use std::{error::Error, fs::File};
-use tokio::io::*;
+use std::*;
 use windows::{
-    Data::Xml::Dom::*, Win32::Foundation::*, Win32::System::Threading::*,
-    Win32::UI::WindowsAndMessaging::*, core::*,
+    Win32::System::Threading::*,
+    core::*,
 };
 
 #[allow(non_camel_case_types)]
@@ -70,6 +64,12 @@ impl BufferedData for NetworkPacketData {
     fn borrowing(&self) -> &NetworkPacketData {
         &self
     }
+    // fn from(buffered_data: &Self, _data: Vec<usize>) -> Self {
+    //     let mut packet_data = buffered_data.packet_data;
+    //     packet_data.inner_data.extend(_data);
+
+    //     Self { packet_data }
+    // }
 }
 
 // @TODO
@@ -110,59 +110,169 @@ impl TheWatcher {
         }
     }
 
+    //  If AI can drop some codes like this logic,
+    //  malware do not need anymore :)
+    //  just conect PC, and then drop that code remotely.
     pub fn setting_target(&mut self) -> &mut Self {
-        //  If AI can drop some codes like this logic,
-        //  malware do not need anymore :)
-        //  just conect PC, and then drop that code remotely.
-        cfg_select! {
-            windows => {
-                // unit test done - fn get_name_process
-                unsafe fn get_name_process(pid: u32) -> windows::core::Result<String> {
-                    unsafe{
-                        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
+        #[cfg(windows)]
+        {
+            // unit test done - fn get_name_process
+            unsafe fn get_name_process(pid: u32) -> windows::core::Result<String> {
+                unsafe {
+                    let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)?;
 
-                        // dead code: let title_len= windows::Wind32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd)
-                        const BUFFER_MAX_SIZE: usize = 2028;
-                        let mut buffer = [0u16; BUFFER_MAX_SIZE];
-                        let mut buffer_size = buffer.len() as u32;
+                    const BUFFER_MAX_SIZE: usize = 2028;
+                    let mut buffer = [0u16; BUFFER_MAX_SIZE];
+                    let mut buffer_size = buffer.len() as u32;
 
-                        QueryFullProcessImageNameW(
-                            handle,
-                             windows::Win32::System::Threading::PROCESS_NAME_WIN32,
-                            PWSTR(buffer.as_mut_ptr()),
-                            &mut buffer_size,
-                        )?;
+                    QueryFullProcessImageNameW(
+                        handle,
+                        windows::Win32::System::Threading::PROCESS_NAME_WIN32,
+                        PWSTR(buffer.as_mut_ptr()),
+                        &mut buffer_size,
+                    )?;
 
-                        Ok(String::from_utf16_lossy(&buffer[..buffer_size as usize]))
-                    }
+                    Ok(String::from_utf16_lossy(&buffer[..buffer_size as usize]))
                 }
-
-                fn filter_absolut_path(raw_path: String) -> (String, String) {
-                    let mut v_strs: Vec<&str> = raw_path[..raw_path.len() + 1].split(r#"\\"#).collect();
-
-                    let exe_name = v_strs.pop().expect("fail to unwrap at exe_name");
-                    let program_name = v_strs.pop().expect("fail to unwrap at program_name");
-                    (program_name.to_string(), exe_name.to_string())
-                }
-
-                let process_full_name: String;
-                unsafe{
-                    process_full_name= get_name_process(self.pid).expect("fail to fn get name to process");
-                };
-
-                self.target= filter_absolut_path(process_full_name);
-            },
-
-            _ => {
-                // @TODO hook a daemon
-                "Asdf"
             }
-        };
 
-        // hook a target
-        // self.data_bus_steam= something;
+            fn filter_absolut_path(raw_path: String) -> (String, String) {
+                let mut v_strs: Vec<&str> = raw_path[..raw_path.len()].split(r#"\\"#).collect();
+
+                let exe_name = v_strs.pop().expect("fail to unwrap at exe_name");
+                let program_name = v_strs.pop().expect("fail to unwrap at program_name");
+                (program_name.to_string(), exe_name.to_string())
+            }
+
+            let process_full_name: String;
+            unsafe {
+                process_full_name =
+                    get_name_process(self.pid).expect("fail to fn get name to process");
+            };
+
+            self.target = filter_absolut_path(process_full_name);
+        }
+
+        #[cfg(not(windows))]
+        {
+            // @TODO hook a daemon
+        }
+
         self
     }
+
+    fn filtering_data(_stream_data: Vec<usize>) -> String {
+        let mut filtered_string = String::new();
+
+        filtered_string
+    }
+
+    fn packet_captureing(exe_name: (String, String)) {
+        #[cfg(windows)]
+        {
+            let exe_name = exe_name.clone();
+
+            fn set_interface(exe_name: (String, String)) {
+                let v_interfaces = pnet::datalink::interfaces();
+                let _interface = v_interfaces
+                    .iter()
+                    .find(|e| e.is_up() && !e.is_loopback() && !e.ips.is_empty());
+
+                let mut receiver = match _interface {
+                    Some(interface) => {
+                        println!("Found default interface with [{}]", interface.name);
+                        let setted_channel = pnet_datalink::channel(interface, Default::default());
+                        let (_, rx) = match setted_channel {
+                            Ok(pnet_datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
+                            Ok(_) => panic!("nothing in value"),
+                            Err(e) => panic!("Err: {} from the datalink channel", e),
+                        };
+
+                        rx
+                    }
+                    None => panic!("fail to packet_captureing on getting receiver"),
+                };
+
+                loop {
+                    match receiver.next() {
+                        Ok(packet) => {
+                            if let Some(ethernet_packet) =
+                                pnet::packet::ethernet::EthernetPacket::new(packet)
+                            {
+                                let converted_wire_format =
+                                    pnet::packet::FromPacket::from_packet(&ethernet_packet);
+
+                                println!(
+                                    "<Active: {}/{}> destination: {} | ethertype: {}",
+                                    exe_name.0, exe_name.1,
+                                    converted_wire_format.destination,
+                                    converted_wire_format.ethertype,
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            println!("Err while reading: {}", e);
+                        }
+                    }
+                }
+            }
+
+            set_interface(exe_name);
+        }
+        #[cfg(not(windows))]
+        {
+            // @TODO
+        }
+    }
+
+    pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
+        self.logging_flag = flag;
+        self.option = option;
+
+        let exe_name = self.target.clone();
+
+        // @TODO fillter
+        // packets <- thread 3
+        match &self.option {
+            LoggingOptions::NETWORK_ACTIVITY_MODE => {
+                std::thread::spawn(move || {
+                    Self::packet_captureing(exe_name);
+                });
+            }
+            _ => {}
+        }
+
+        // @TODO
+        // self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
+
+        self
+    }
+}
+
+    // pub fn output_txt_path(&mut self, flag: bool) -> Result<&mut Self> {
+    //     let path = &self.output_path;
+    //     let full_path = format!("{}/output.txt", path);
+
+    //     match flag {
+    //         true => {
+    //             let mut file = File::create(full_path)?;
+
+    //             let unwrapped_data = BufferedData::unwrap_data(self.buffered_data);
+    //             let filtered_data = filtering_data(unwrapped_data);
+
+    //             file.write_all(filtered_data.as_bytes())?;
+    //         }
+    //         false => {
+    //             // @TODO send data to sender as email
+    //         }
+    //     }
+    //     Ok(self)
+    // }
+
+    // pub fn csv_format_option(&mut self, flag: bool) -> Result<&mut Self> {
+    //     Ok(self)
+    // }
+
 
     // async fn read_data_stream(data_bus_stream: stream) -> Result<Vec<usize>, Box<dyn Error>> {
     //     static CAPACITY_LINE: usize= 1024000000;
@@ -200,165 +310,3 @@ impl TheWatcher {
 
     //     Ok(unwrapped_data)
     // }
-
-    fn filtering_data(_stream_data: Vec<usize>) -> String {
-        let mut filtered_string = String::new();
-
-        filtered_string
-    }
-
-
-  
- 
-    fn packet_caturing(exe_name: (String, String), current_windows_tap_name: String) {
-        cfg_select! {
-            windows => {
-                let exe_name= exe_name.clone();
-                let current_windows_tap_name= current_windows_tap_name.clone();
-
-                fn set_interface(exe_name: (String, String), current_windows_tap_name: String){
-                    let default_interface: &pnet::datalink::NetworkInterface;
-
-
-                    {
-                        let v_interfaces= pnet::datalink::interfaces();
-                        let _interface= v_interfaces
-                            .iter()
-                            .find(|e| e.is_up() && !e.is_loopback() & !e.ips.is_empty());
-
-                        let mut receiver= match _interface {
-                            Some(interface) => {
-                                println!("Found default intercae wiht [{}]", interface.name);
-                                let setted_channel= pnet_datalink::channel(interface, Default::default());
-                                let (_ , rx)= match setted_channel{
-                                    Ok(pnet_datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
-                                    Ok(_) =>  { panic!("nothing in value") },
-                                    Err(e) => { panic!("Err: {} from the datalink channel", e); }
-                                };
-
-                                rx
-                            },
-                            None => { panic!("fail to packet_captureing on getting receiver") },
-                        };
-
-                        loop{
-                            match receiver.next(){
-                                Ok(packet) => {
-                                    if let Some(ethernet_packet)= pnet::packet::ethernet::EthernetPacket::new(packet){
-                                        let converted_wire_format= pnet::packet::FromPacket::from_packet(&ethernet_packet);
-
-                                        // @TODO std::format
-                                        println!("<Active: {}/{}: {}> destination: {} | ethertype: {}",
-                                            exe_name.0 , exe_name.1,
-                                            current_windows_tap_name,
-                                            converted_wire_format.destination,
-                                            converted_wire_format.ethertype,
-                                    )};
-                                },
-                                Err(e) =>{
-                                    println!("Err while reading: {}", e);
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            _ => {
-                // @TODO crate lib
-                "Asdf"
-            }
-        }
-    }
-    pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
-        self.logging_flag = flag;
-        self.option = option;
-
-        // @TODO
-        // If this program save a data as file automatically,
-        // i can write my code more consistently(buffer clean, and then keep watching again).
-        // But its not a malware. Just in educational purpose.
-        let pid = self.pid.clone();
-
-        // logging
-        // let stream_data = read_data_stream(self.data_bus_stream);
-        // // @TODO unwrap data
-
-        //
-        // self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
-
-        let exe_name = self.target.clone();
-
-        // unit test done - fn get_current_windows_title_name()
-        let current_window_tap_name = unsafe {
-            let mut reulst_title_string = String::new();
-
-            let mut hwnd = GetForegroundWindow();
-            if hwnd.is_invalid() {
-                eprint!("can't get hwnd");
-            } else {
-                hwnd = hwnd.clone();
-            }
-
-            let mut ipdw_process_id: u32 = 111_u32; // just for fill parameter
-            let targeted_process =
-                GetWindowThreadProcessId(hwnd, Option::Some(&mut ipdw_process_id));
-            self.pid = targeted_process;
-
-            // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
-            const BUFFER_MAX_SIZE: u16 = 2048_u16;
-            let mut str_buffer = [0u16; BUFFER_MAX_SIZE as usize];
-            let actual_len = GetWindowTextW(
-                hwnd,
-                &mut str_buffer,
-                // str_buffer.len() as i32
-            );
-
-            // Gemini mentioned "Preventing Ghost Windows"
-            if actual_len != 0 {
-                reulst_title_string = String::from_utf16_lossy(&str_buffer[..actual_len as usize]);
-            }
-
-            reulst_title_string
-        };
-
-        // @TODO fillter
-        // packets <- thread 3
-        // extract receiver, protoccol, and data.
-        // show data / exe_name  tap_name  protoccol senderIP
-
-        match &self.option {
-            LoggingOptions::NETWORK_ACTIVITY_MODE => {
-                std::thread::spawn(move || {
-                    packet_captureing(exe_name, current_windows_tap_name);
-                });
-            }
-            _ => {}
-        }
-
-        self
-    }
-
-    // pub fn output_txt_path(&mut self, flag: bool) -> Result<&mut Self> {
-    //     let path = &self.output_path;
-    //     let full_path = format!("{}/output.txt", path);
-
-    //     match flag {
-    //         true => {
-    //             let mut file = File::create(full_path)?;
-
-    //             let unwrapped_data = BufferedData::unwrap_data(self.buffered_data);
-    //             let filtered_data = filtering_data(unwrapped_data);
-
-    //             file.write_all(filtered_data.as_bytes())?;
-    //         }
-    //         false => {
-    //             // @TODO send data to sender as email
-    //         }
-    //     }
-    //     Ok(self)
-    // }
-
-    // pub fn csv_format_option(&mut self, flag: bool) -> Result<&mut Self> {
-    //     Ok(self)
-    // }
-}

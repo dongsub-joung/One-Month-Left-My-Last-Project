@@ -13,7 +13,6 @@ dependencies = [
  "pnet_datalink",
  "rdev",
  "rgon-pnet",
- "rgon-pnet-datalink",
  "tokio",
  "windows",
 ]
