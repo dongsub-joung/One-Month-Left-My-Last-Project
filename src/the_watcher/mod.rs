@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+use pnet::*;
 use libc::{AF_PACKET, ETH_P_ALL, SOCK_RAW, socket};
 use std::io::prelude::*;
 use std::{error::Error, fs::File};
@@ -205,7 +206,7 @@ impl TheWatcher {
         };
         reulst_title_string
     }
-    async fn packet_caturing() {
+    fn packet_caturing() {
         cfg_select! {
             windows =>{
                 // @TODO crate windows_sys
