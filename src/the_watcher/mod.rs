@@ -138,7 +138,7 @@ impl TheWatcher {
             }
 
             fn filter_absolut_path(raw_path: String) -> (String, String) {
-                let mut v_strs: Vec<&str> = raw_path[..raw_path.len()].split(r#"\\"#).collect();
+                let mut v_strs: Vec<&str> = raw_path[..raw_path.len()].split("\\").collect();
 
                 let exe_name = v_strs.pop().expect("fail to unwrap at exe_name");
                 let program_name = v_strs.pop().expect("fail to unwrap at program_name");
@@ -229,78 +229,10 @@ impl TheWatcher {
     // }
 
     pub fn packet_captureing_without_nmap(exe_name: (String, String)) {
-        let mut capture_barve = Capture::new().unwrap();
-        let mut capture_chrome = Capture::new().unwrap();
-        let mut capture_firefox = Capture::new().unwrap();
         
-        let exe_name1= exe_name.clone();
-        let exe_name2= exe_name.clone();
-        let exe_name3= exe_name.clone();
-
-        std::thread::spawn(move || {
-            capture_barve
-                .add_filter(PktMonFilter {
-                    name: "UDP Filter".to_string(),
-                    transport_protocol: Some(TransportProtocol::UDP),
-                    port: 5353.into(), // brave
-
-                    ..PktMonFilter::default()
-                })
-                .unwrap();
-
-            capture_barve.start().unwrap();
-
-            let packet = capture_barve.next_packet().unwrap();
-
-            println!(
-                "<Active: {}/{}> payload: {:?}",
-                exe_name1.0, exe_name1.1, packet.payload,
-            );
-        });
-
-        
-        std::thread::spawn(move || {
-            capture_chrome
-                .add_filter(PktMonFilter {
-                    name: "UDP Filter".to_string(),
-                    transport_protocol: Some(TransportProtocol::UDP),
-                    port: 443.into(), // chrome, but Default Ports: While 80 and 443 are standard
-
-                    ..PktMonFilter::default()
-                })
-                .unwrap();
-
-            capture_chrome.start().unwrap();
-
-            let packet = capture_chrome.next_packet().unwrap();
-            println!(
-                "<Active: {}/{}> payload: {:?}",
-                exe_name2.0, exe_name2.1, packet.payload,
-            );
-        });
-
-        std::thread::spawn(move || {
-            capture_firefox
-                .add_filter(PktMonFilter {
-                    name: "UDP Filter".to_string(),
-                    transport_protocol: Some(TransportProtocol::UDP),
-                    port: 443 .into(), // firefox
-
-                    ..PktMonFilter::default()
-                })
-                .unwrap();
-
-            capture_firefox.start().unwrap();
-
-            let packet = capture_firefox.next_packet().unwrap();
-            println!(
-                "<Active: {}/{}> payload: {:?}",
-                exe_name3.0, exe_name3.1, packet.payload,
-            );
-        });
     }
 
-    pub async fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
+    pub fn logging(&mut self, flag: bool, option: LoggingOptions) -> &mut Self {
         self.logging_flag = flag;
         self.option = option;
 

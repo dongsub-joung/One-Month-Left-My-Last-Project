@@ -1,12 +1,15 @@
+mod the_watcher;
+mod input_handle;
+
 use the_watcher::*;
+use input_handle::*;
 
 use anyhow::Result;
 
-mod the_watcher;
+
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let pid = 1104;
     let output_path = "./Documents";
 
     println!("--------------------------------------------------------------");
@@ -18,12 +21,13 @@ async fn main() -> Result<()> {
     println!("   YP    YP   YP    YP    `8888Y' ~Y8888P'    YP    YP   YP ");
     println!("--------------------------------------------------------------");
 
+    let pid= input_handle::accept_input();
     let mut watcher_a = TheWatcher::new(pid, output_path);
 
     watcher_a
         .setting_target()
-        .logging(true, LoggingOptions::NETWORK_ACTIVITY_MODE)
-        .await;
+        .logging(true, LoggingOptions::NETWORK_ACTIVITY_MODE);
+        // .await;
         // .output_txt_path(true)?
         // .csv_format_option(true)?;
 
