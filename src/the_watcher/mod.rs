@@ -34,7 +34,7 @@ pub struct TheWatcher {
 }
 
 struct Data<T> {
-    timestamp: u64,
+    timestamp: std::time::systemTime,
     inner_data: T,
 }
 
@@ -57,8 +57,12 @@ impl BufferedData for NetworkPacketData {
     type Payload = Vec<usize>;
 
     fn new() -> Self {
-        let mut v: Vec<usize> = Vec::new();
-        let packet_data = Data { v };
+        let timestamp = std::time::SystemTime::now();
+        let mut inner_data: Vec<usize> = Vec::new();
+        let packet_data = Data {
+            timestamp,
+            inner_data,
+        };
         Self { packet_data }
     }
     fn from(buffered_data: &NetWorkPacketData, _data: Vec<usize>) -> Self {
