@@ -1,7 +1,7 @@
 use anyhow::Result;
 
-use pnet::*;
 use libc::{AF_PACKET, ETH_P_ALL, SOCK_RAW, socket};
+use pnet::*;
 use std::io::prelude::*;
 use std::{error::Error, fs::File};
 use tokio::io::*;
@@ -33,11 +33,20 @@ pub struct TheWatcher {
     // data_bus_stream: Someting,
 }
 
-struct BufferedData {
+struct Data {
     // date: Date
     data: Vec<usize>,
     // sender_email: &' static str
 }
+
+trait BufferedData {
+    fn new() -> Self;
+
+    // @TODO _data will have Generic type
+    fn from(buffered_data: Data, _data: Vec<usize>) -> Self;
+    fn unwrap_data(self) -> Vec<usize>;
+}
+
 impl BufferedData {
     pub fn new() -> Self {
         let data: Vec<usize> = Vec::new();
@@ -234,8 +243,9 @@ impl TheWatcher {
                         // if packet have pnet_pacekt::Packet
                         Ok(packet) => {
                             if let Some(ethernet_packet)= EthernetPacket::new(packet){
-                                let converted_wire_format= pnet::packet::FromPacket::from_packet(ethernet);
-                                print!("destination: {} | ethertype: {}", converted_wire_format.getdstination(), converted_wire_format.get_ethertype());
+                                let converted_wire_format= pnet::packet::FromPacket::from_packet(ethernet_packet);
+                                println!("destination: {} | ethertype: {}", converted_wire_format.getdstination(), converted_wire_format.get_ethertype());
+                                println!("")
                             }
                         },
                         Err(e) =>{
