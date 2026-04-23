@@ -39,13 +39,13 @@ struct Data<T> {
 }
 
 struct NetworkPacketData {
-    // date: Date
+    // @TODO Data<T> will have Packet type
     packet_data: Data<Vec<usize>>,
     // sender_email: &' static str
 }
 
 trait BufferedData {
-    type Payload;
+    type DataType;
 
     fn new() -> Self;
     fn from(buffered_data: NetworkPacketData, _data: Vec<usize>) -> Self;
@@ -54,7 +54,8 @@ trait BufferedData {
 }
 
 impl BufferedData for NetworkPacketData {
-    type Payload = Vec<usize>;
+    // @TODO will have Packet type
+    type DataType = Vec<usize>;
 
     fn new() -> Self {
         let timestamp = std::time::SystemTime::now();
@@ -67,14 +68,14 @@ impl BufferedData for NetworkPacketData {
     }
     fn from(buffered_data: &NetWorkPacketData, _data: Vec<usize>) -> Self {
         let mut packet_data = buffered_data.data;
-        data.extend(_data);
+        packet_data.inner_data.extend(_data);
 
         Self { packet_data }
     }
     fn unwrap_data(self) -> Vec<usize> {
         self.packet_data.inner_data
     }
-    fn borrowing(self) -> &Vec<usize> {
+    fn borrowing(&self) -> &Vec<usize> {
         &self.packet_data_inner_data
     }
 }
@@ -89,7 +90,7 @@ impl TheWatcher {
     pub fn new(pid: u32, output_path: &'static str) -> Self {
         let logging_flag = true;
         let csv_option = Default::default();
-        let option = LoggingOptions::ALL;
+        let option = LoggingOptions::NETWORK_ACTIVITY_MODE;
         let buffered_data = BufferedData::new();
         let target = (Default::default(), Default::default());
         // let data_bus_stream= something;
