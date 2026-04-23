@@ -19,6 +19,7 @@ async fn main() -> Result<()> {
     println!("--------------------------------------------------------------");
 
     let mut watcher_a = TheWatcher::new(pid, output_path);
+
     watcher_a
         .setting_target()
         .logging(true, LoggingOptions::ALL)
@@ -26,7 +27,7 @@ async fn main() -> Result<()> {
         .output_txt_path(true)?
         .csv_format_option(true)?;
 
-    //  watcher_a::run();
+    // watcher_a.run_without_logging();
 
     Ok(())
 }

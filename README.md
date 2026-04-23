@@ -5,14 +5,13 @@ I will publish this crates, If I can do it in the end.
 Dead end: 14/04/2026 started, after almost 2 month
 
 ```rust
-use the_watcher::*;
-use anyhow::Result;
-
 mod the_watcher;
+
+use the_watcher::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-
+    
     println!("--------------------------------------------------------------");
     println!("d888888b  .d8b.  d888888b .d8888. db    db db    db  .d8b.");
     println!("`~~88~~' d8' `8b `~~88~~' 88'  YP 88    88 `8b  d8' d8' `8b ");  
@@ -30,7 +29,7 @@ async fn main() -> Result<()> {
         .output_txt_path()?
         .csv_format_option(true)?;
     
-    watcher_a::run();
+    // watcher_a.run_without_logging();
 
     Ok(())
 }
