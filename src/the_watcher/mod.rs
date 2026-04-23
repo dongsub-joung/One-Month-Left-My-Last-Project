@@ -10,6 +10,8 @@ use windows::{
     Win32::UI::WindowsAndMessaging::*, core::*,
 };
 
+use crate::the_watcher;
+
 #[allow(non_camel_case_types)]
 pub enum LoggingOptions {
     // <Windows tail title>: receiver IP / DNS address
@@ -116,8 +118,6 @@ impl TheWatcher {
         //  just conect PC, and then drop that code remotely.
         cfg_select! {
             windows => {
-                
-                
                 // unit test done - fn get_name_process
                 unsafe fn get_name_process(pid: u32) -> windows::core::Result<String> {
                     unsafe{
@@ -147,7 +147,7 @@ impl TheWatcher {
                     (program_name.to_string(), exe_name.to_string())
                 }
 
-                let mut process_full_name= String::new();
+                let process_full_name: String;
                 unsafe{
                     process_full_name= get_name_process(self.pid).expect("fail to fn get name to process");
                 };
@@ -211,7 +211,7 @@ impl TheWatcher {
 
     // title name supporte English, Japanese, and so on (unicode)
     // unit test done - fn get_current_windows_title_name()
-    unsafe fn get_current_windows_title_name() -> String {
+    unsafe fn get_current_windows_title_name(the_watcher: &mut TheWatcher) -> String {
         let mut reulst_title_string = String::new();
 
         unsafe {
@@ -225,6 +225,7 @@ impl TheWatcher {
             let mut ipdw_process_id: u32 = 111_u32; // just for fill parameter
             let targeted_process =
                 GetWindowThreadProcessId(hwnd, Option::Some(&mut ipdw_process_id));
+            the_watcher.pid= targeted_process;
 
             // let title_len= windows::Win32::UI::WindowsAndMessaging::GetWindowTextLengthW(hwnd);
             const BUFFER_MAX_SIZE: u16 = 2048_u16;
@@ -310,7 +311,7 @@ impl TheWatcher {
         // self.buffered_data = BufferedData::from(self.buffered_data, stream_data);
 
         let exe_name = self.target.clone();
-        let current_window_tap_name = get_current_windows_title_name();
+        let current_window_tap_name = get_current_windows_title_name(self);
 
         // @TODO fillter
         // packets <- thread 3
