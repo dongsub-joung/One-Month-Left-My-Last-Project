@@ -1,8 +1,11 @@
 mod the_watcher;
 mod input_handle;
+mod pingora_proxy;
+
 
 use the_watcher::*;
 use input_handle::*;
+use pingora_proxy;
 
 use anyhow::Result;
 
@@ -22,8 +25,12 @@ async fn main() -> Result<()> {
     println!("--------------------------------------------------------------");
 
     let pid= input_handle::accept_input();
-    let mut watcher_a = TheWatcher::new(pid, output_path);
 
+    let proxy_server= Server::new(None).unwrap();
+    proxy_server.bootstrap();
+    proxy_server.run_forever();
+
+    let mut watcher_a = TheWatcher::new(pid, output_path);
     watcher_a
         .setting_target()
         .logging(true, LoggingOptions::NETWORK_ACTIVITY_MODE);
