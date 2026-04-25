@@ -6,7 +6,7 @@
 
 use async_trait::async_trait;
 use pingora::{ prelude::*, ErrorType };
-use std::sync::Arc;
+use std::{sync::Arc, thread::Thread, time::Duration};
 
 pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 
@@ -55,23 +55,49 @@ impl ProxyHttp for LB {
 }
 
 // @TODO idk Model meaning
-pub fn heath_checking(){
+fn heath_checking(){
     // pingora::lb::Backend
 }
 
-pub fn run_pingora(server: Server){
+// IDK I will give a question to Google's Gemini
+struct costom_server for pingora_core::server::Server{}
+impl custom_server_run for Box<impl Server>{
+    fn run_forever(self) -> ! {
+        self.run(RunArgs::default());
+
+        loop {
+            heath_checking();
+
+            let duration= Duration::new(300, Default::default())
+            sleep(duration);
+        }
+
+        std::process::exit(0)
+    }
+}
+
+pub fn run_pingora(proxy_server: Server){
     std::thread::spawn(move || {
         let proxy_server= Server::new(None).unwrap();
+
+        // Thread lock
         proxy_server.bootstrap();
     
         let upstreams =
             LoadBalancer::try_from_iter(["1.1.1.1:443", "1.0.0.1:443"]).unwrap();
-    
-        let mut lb = http_proxy_service(&my_server.configuration, LB(Arc::new(upstreams)));
+        
+        // Arc<ServerConf>: struct ServerConf is big, so Arc<> used
+        // IDK "Module proxy"'s meaning
+        let mut lb = pingora::proxy::http_proxy_service(&proxy_server.configuration, 
+            LB(Arc::new(upstreams))
+        );
         lb.add_tcp("0.0.0.0:6188");
     
         proxy_server.add_service(lb);
-    
-        proxy_server.run_forever();
+
+        heath_checking();
+        
+        // proxy_server.run_forever();
+        custom_server_run::run_forever(proxy_server);
     });
 }
