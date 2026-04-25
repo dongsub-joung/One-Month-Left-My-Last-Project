@@ -7,6 +7,7 @@
 use async_trait::async_trait;
 use pingora::{ prelude::*, ErrorType };
 use std::{sync::Arc, thread::Thread, time::Duration};
+use tokio::time::{sleep, Duration};
 
 pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 
@@ -62,17 +63,18 @@ fn heath_checking(){
 // IDK I will give a question to Google's Gemini
 struct costom_server for pingora_core::server::Server{}
 impl custom_server_run for Box<impl Server>{
-    fn run_forever(self) -> ! {
+    async fn run_forever(self) {
+        let server= self.clone();
+        
         self.run(RunArgs::default());
-
+        
         loop {
-            heath_checking();
+            health_checking(server);
+            
+            sleep(Duration::from_secs(300)).await;
 
-            let duration= Duration::new(300, Default::default())
-            sleep(duration);
+            std::process::exit(0);
         }
-
-        std::process::exit(0)
     }
 }
 
@@ -94,8 +96,6 @@ pub fn run_pingora(proxy_server: Server){
         lb.add_tcp("0.0.0.0:6188");
     
         proxy_server.add_service(lb);
-
-        heath_checking();
         
         // proxy_server.run_forever();
         custom_server_run::run_forever(proxy_server);
