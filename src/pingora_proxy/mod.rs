@@ -5,10 +5,11 @@
 // Apprications <- ports <-  proxy server  -> API -> TheWatcher
 
 use async_trait::async_trait;
-use pingora::prelude::*;
+use pingora::{ prelude::*, ErrorType };
 use std::sync::Arc;
 
 pub struct LB(Arc<LoadBalancer<RoundRobin>>);
+
 #[async_trait]
 impl ProxyHttp for LB {
     async fn upstream_peer(&self, _session: &mut Session, _ctx: &mut ()) -> Result<Box<HttpPeer>> {
@@ -33,6 +34,19 @@ impl ProxyHttp for LB {
         
         upstream_request.insert_header("Host", "one.one.one.one").unwrap();
         
+        Ok(())
+    }
+}
+
+impl ProxyHttp for LB {
+    // ...
+    async fn upstream_request_filter(
+        &self,
+        _session: &mut Session,
+        upstream_request: &mut RequestHeader,
+        _ctx: &mut Self::CTX,
+    ) -> Result<()> {
+        upstream_request.insert_header("Host", "one.one.one.one").unwrap();
         Ok(())
     }
 }

@@ -26,9 +26,21 @@ async fn main() -> Result<()> {
 
     let pid= input_handle::accept_input();
 
-    let proxy_server= Server::new(None).unwrap();
-    proxy_server.bootstrap();
-    proxy_server.run_forever();
+    // @TODO thread spawn
+    std::thread::spawn(move || {
+        let proxy_server= Server::new(None).unwrap();
+        proxy_server.bootstrap();
+    
+        let upstreams =
+            LoadBalancer::try_from_iter(["1.1.1.1:443", "1.0.0.1:443"]).unwrap();
+    
+        let mut lb = http_proxy_service(&my_server.configuration, LB(Arc::new(upstreams)));
+        lb.add_tcp("0.0.0.0:6188");
+    
+        proxy_server.add_service(lb);
+    
+        proxy_server.run_forever();
+    });
 
     let mut watcher_a = TheWatcher::new(pid, output_path);
     watcher_a

@@ -91,6 +91,8 @@ pub struct TheWatcher {
 }
 
 impl TheWatcher {
+
+    #[must_use]
     pub fn new(pid: u32, output_path: &'static str) -> Self {
         let logging_flag = true;
         let csv_option = Default::default();
