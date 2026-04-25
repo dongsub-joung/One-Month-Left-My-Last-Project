@@ -20,7 +20,9 @@ impl ProxyHttp for LB {
         println!("upstream peer is: {upstream:?}");
 
         // Set SNI to one.one.one.one
-        let peer = Box::new(HttpPeer::new(upstream, true, "one.one.one.one".to_string()));
+        let peer = Box::new(
+            HttpPeer::new(upstream, true, "one.one.one.one".to_string())
+        );
         
         Ok(peer)
     }
@@ -39,23 +41,37 @@ impl ProxyHttp for LB {
 }
 
 impl ProxyHttp for LB {
-    // ...
     async fn upstream_request_filter(
         &self,
         _session: &mut Session,
         upstream_request: &mut RequestHeader,
         _ctx: &mut Self::CTX,
     ) -> Result<()> {
+        
         upstream_request.insert_header("Host", "one.one.one.one").unwrap();
+
         Ok(())
     }
 }
 
-fn create_pingora_server(){
-    let mut my_server = Server::new(None).unwrap();
-    my_server.bootstrap();
+// @TODO idk Model meaning
+pub fn heath_checking(){
+    // pingora::lb::Backend
 }
 
 pub fn run_pingora(server: Server){
-    server.run_forever();
+    std::thread::spawn(move || {
+        let proxy_server= Server::new(None).unwrap();
+        proxy_server.bootstrap();
+    
+        let upstreams =
+            LoadBalancer::try_from_iter(["1.1.1.1:443", "1.0.0.1:443"]).unwrap();
+    
+        let mut lb = http_proxy_service(&my_server.configuration, LB(Arc::new(upstreams)));
+        lb.add_tcp("0.0.0.0:6188");
+    
+        proxy_server.add_service(lb);
+    
+        proxy_server.run_forever();
+    });
 }
