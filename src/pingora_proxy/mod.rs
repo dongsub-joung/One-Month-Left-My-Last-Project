@@ -10,17 +10,27 @@ use std::{sync::Arc, thread::Thread, time::Duration};
 use tokio::time::{sleep, Duration};
 
 const TCP_PORT: &'static str= "0.0.0.0:6188";
+const SNI: &'static str= "one.one.one.one";
 
 pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 
 #[async_trait]
 impl ProxyHttp for LB {
     // @TODO struct Proxy within crate::connectors
-    fn proxy_setting(conn: connectors){
+    fn proxy_setting(&self, conn: connectors){ // -> struct Proxy
         let someting: connectors;
-        let proxy= Peer::get_proxy(&someting);
-        let v: AsRawSocket;
-        Peer::matches_sock(&proxy, v);
+        let options_proxy= Peer::get_proxy(&someting);
+        let proxy= match options_proxy{
+            Some(proxy) =>{
+                return proxy;
+            },
+            None => {
+                // @TODO return Proxy struct (proxy is default value)
+                return Proxy::set_proxy(Default::default);
+            }
+        };
+
+        // return Proxy::set_options(proxy); or peroxy.set_options();
     }
 
     async fn upstream_peer(&self, _session: &mut Session, _ctx: &mut ()) -> Result<Box<HttpPeer>> {
@@ -32,7 +42,7 @@ impl ProxyHttp for LB {
 
         // Set SNI to one.one.one.one
         let peer = Box::new(
-            HttpPeer::new(upstream, true, "one.one.one.one".to_string())
+            HttpPeer::new(upstream, true, SNI.to_string())
         );
         
         Ok(peer)
@@ -45,7 +55,7 @@ impl ProxyHttp for LB {
         _ctx: &mut Self::CTX,
         ) -> Result<()> {
         
-        upstream_request.insert_header("Host", "one.one.one.one").unwrap();
+        upstream_request.insert_header("Host", SNI).unwrap();
         
         Ok(())
     }
@@ -55,6 +65,7 @@ impl ProxyHttp for LB {
 fn heath_checking(){
     // pingora::lb::Backend
 }
+
 struct CostomServer{
     server: server,
 }
@@ -63,13 +74,20 @@ impl CostomServer for Box<impl Server>{
         self{ server }
     }
 
+    // @TODO
+    fn health_checking(server: &Server){
+        
+    }
+
     async fn run_forever(self) {
         let server= self.server.clone();
         
         self.run(RunArgs::default());
-        
+        self.logging_option();
+
         loop {
-            health_checking(server);
+            // @TODO Add 
+            health_checking(&server);
             
             sleep(Duration::from_secs(300)).await;
 
@@ -102,3 +120,12 @@ pub fn run_pingora(proxy_server: Server){
         custome_proxy_server.run_forever();
     });
 }
+
+
+// @TODO When server comunicate with API, logging turn on
+    struct Log{
+        time: Date,
+        source: String, // struct IpAdrr ip4 and ip6 both
+        des: String,    // struct IpAdrr ip4 and ip6 both
+        mac_iq: String, // i guess struct Mac already is
+    }
