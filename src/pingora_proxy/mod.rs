@@ -97,6 +97,7 @@ impl CostomServer for Box<impl Server>{
 }
 
 pub fn run_pingora(proxy_server: Server){
+    // server
     std::thread::spawn(move || {
         const LB_SETTING: [&'static str; 2]= ["1.1.1.1:443", "1.0.0.1:443"];
         
@@ -118,6 +119,18 @@ pub fn run_pingora(proxy_server: Server){
 
         let custome_proxy_server= CostomServer::casting_type(proxy_server);
         custome_proxy_server.run_forever();
+    });
+}
+
+
+// API  
+pub fn pingora_api_worker(){
+    std::thread::spawn(move || {
+        // poart 6188
+        
+        // filltering
+
+        // logging
     });
 }
 
