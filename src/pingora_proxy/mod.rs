@@ -9,6 +9,8 @@ use pingora::{ prelude::*, ErrorType, server };
 use std::{sync::Arc, thread::Thread, time::Duration};
 use tokio::time::{sleep, Duration};
 
+const TCP_PORT: &'static str= "0.0.0.0:6188";
+
 pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 
 #[async_trait]
@@ -48,7 +50,11 @@ fn heath_checking(){
 struct CostomServer{
     server: server,
 }
-impl custom_server_run for CostomServer{
+impl CostomServer for Box<impl Server>{
+    fn casting(server: Server) -> Self{
+        self{ server }
+    }
+
     async fn run_forever(self) {
         let server= self.server.clone();
         
@@ -71,19 +77,19 @@ pub fn run_pingora(proxy_server: Server){
         // Thread lock
         proxy_server.bootstrap();
     
+        const LB_SETTING: [&'static str; 2]= ["1.1.1.1:443", "1.0.0.1:443"];
         let upstreams =
-            LoadBalancer::try_from_iter(["1.1.1.1:443", "1.0.0.1:443"]).unwrap();
+            LoadBalancer::try_from_iter(LB_SETTING[0], LB_SETTING[1]).unwrap();
         
         // Arc<ServerConf>: struct ServerConf is big, so Arc<> used
-        // IDK "Module proxy"'s meaning
         let mut lb = pingora::proxy::http_proxy_service(&proxy_server.configuration, 
             LB(Arc::new(upstreams))
         );
-        lb.add_tcp("0.0.0.0:6188");
+        lb.add_tcp(TCP_PORT);
     
         proxy_server.add_service(lb);
-        
-        // proxy_server.run_forever();
-        custom_server_run::run_forever(proxy_server);
+
+        let custome_proxy_server= CostomServer::casting(proxy_server);
+        custome_proxy_server.run_forever();
     });
 }
