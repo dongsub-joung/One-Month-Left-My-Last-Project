@@ -5,7 +5,7 @@
 // Apprications <- ports <-  proxy server  -> API -> TheWatcher
 
 use async_trait::async_trait;
-use pingora::{ prelude::*, ErrorType };
+use pingora::{ prelude::*, ErrorType, server };
 use std::{sync::Arc, thread::Thread, time::Duration};
 use tokio::time::{sleep, Duration};
 
@@ -41,30 +41,16 @@ impl ProxyHttp for LB {
     }
 }
 
-impl ProxyHttp for LB {
-    async fn upstream_request_filter(
-        &self,
-        _session: &mut Session,
-        upstream_request: &mut RequestHeader,
-        _ctx: &mut Self::CTX,
-    ) -> Result<()> {
-        
-        upstream_request.insert_header("Host", "one.one.one.one").unwrap();
-
-        Ok(())
-    }
-}
-
 // @TODO idk Model meaning
 fn heath_checking(){
     // pingora::lb::Backend
 }
-
-// IDK I will give a question to Google's Gemini
-struct costom_server for pingora_core::server::Server{}
-impl custom_server_run for Box<impl Server>{
+struct CostomServer{
+    server: server,
+}
+impl custom_server_run for CostomServer{
     async fn run_forever(self) {
-        let server= self.clone();
+        let server= self.server.clone();
         
         self.run(RunArgs::default());
         
