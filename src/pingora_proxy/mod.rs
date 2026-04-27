@@ -23,8 +23,7 @@ pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 impl ProxyHttp for LB {
     // @TODO struct Proxy within crate::connectors
     fn proxy_setting(&self, conn: connectors){ // -> struct Proxy
-        let someting: connectors;
-        let options_proxy= Peer::get_proxy(&someting);
+        let options_proxy= Peer::get_proxy(&conn);
         let proxy= match options_proxy{
             Some(proxy) =>{
                 return proxy;
