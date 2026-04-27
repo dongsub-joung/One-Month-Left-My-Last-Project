@@ -125,7 +125,7 @@ pub fn run_pingora(proxy_server: Server){
         proxy_server.add_service(lb);
 
         // @TODO build parameters
-        Proxy::proxy::request_body_filter(
+        Proxy::ProxyHttp::request_body_filter(
             proxy_server: self,
             _session: mut Session,
             _body: mut Option<Bytes>,
