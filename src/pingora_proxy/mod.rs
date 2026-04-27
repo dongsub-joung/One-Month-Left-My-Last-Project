@@ -19,7 +19,6 @@ const SNI: &'static str= "one.one.one.one";
 
 pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 
-// pingora::proxy Module prelude 
 #[async_trait]
 impl ProxyHttp for LB {
     // @TODO struct Proxy within crate::connectors
@@ -31,6 +30,7 @@ impl ProxyHttp for LB {
                 return proxy;
             },
             None => {
+                // http_proxy_service
                 // @TODO return Proxy struct (proxy is default value)
                 return Proxy::set_proxy(Default::default);
             }
@@ -123,6 +123,15 @@ pub fn run_pingora(proxy_server: Server){
         lb.add_tcp(TCP_PORT);
     
         proxy_server.add_service(lb);
+
+        // @TODO build parameters
+        Proxy::proxy::request_body_filter(
+            proxy_server: self,
+            _session: mut Session,
+            _body: mut Option<Bytes>,
+            _end_of_streamL: bool,
+            _ctn: Self::CTX,
+        );
 
         let custome_proxy_server= CostomServer::casting_type(proxy_server);
         custome_proxy_server.run_forever();
