@@ -21,23 +21,6 @@ pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 
 #[async_trait]
 impl ProxyHttp for LB {
-    // @TODO struct Proxy within crate::connectors
-    fn proxy_setting(&self, conn: connectors){ // -> struct Proxy
-        let options_proxy= Peer::get_proxy(&conn);
-        let proxy= match options_proxy{
-            Some(proxy) =>{
-                return proxy;
-            },
-            None => {
-                // http_proxy_service
-                // @TODO return Proxy struct (proxy is default value)
-                return Proxy::set_proxy(Default::default);
-            }
-        };
-
-        // return Proxy::set_options(proxy); or peroxy.set_options();
-    }
-
     async fn upstream_peer(&self, _session: &mut Session, _ctx: &mut ()) -> Result<Box<HttpPeer>> {
         let upstream = self.0
             .select(b"", 256) // hash doesn't matter for round robin
