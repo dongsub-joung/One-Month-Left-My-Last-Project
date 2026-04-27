@@ -139,6 +139,14 @@ pub fn run_pingora(proxy_server: Server){
             _end_of_streamL: bool,
             _ctn: Self::CTX,
         );
+        
+        // @TODO build parameters
+        Proxy::ProxyHttp::logging(
+            proxy_server: self,
+            _session: mut Session,
+            _e: Option<Error>,
+            _ctx: Self::CTX,
+        );
 
         let custome_proxy_server= CostomServer::casting_type(proxy_server);
         custome_proxy_server.run_forever();
