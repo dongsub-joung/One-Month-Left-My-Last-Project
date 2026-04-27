@@ -145,7 +145,8 @@ pub fn run_pingora(proxy_server: Server){
 }
 
 
-// API  
+
+// /src/api/mod.rs   
 pub fn pingora_api_worker(){
     std::thread::spawn(move || {
         // poart 6188
@@ -156,8 +157,6 @@ pub fn pingora_api_worker(){
         // pingora::services Module listening 
     });
 }
-
-
 // @TODO When server comunicate with API, logging turn on
     struct Log{
         time: Date,
