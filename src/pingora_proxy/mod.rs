@@ -4,6 +4,11 @@
 //                  load-balancing
 // Apprications <- ports <-  proxy server  -> API -> TheWatcher
 
+// @TODO Struct ProxyServiceBuilder(pingora::proxy) will be used to build custom connector and
+// custome seetion handler
+// https://docs.rs/pingora/latest/pingora/proxy/struct.ProxyServiceBuilder.html
+// https://docs.rs/pingora/latest/pingora/proxy/struct.Session.html
+
 use async_trait::async_trait;
 use pingora::{ prelude::*, ErrorType, server };
 use std::{sync::Arc, thread::Thread, time::Duration};
@@ -14,6 +19,7 @@ const SNI: &'static str= "one.one.one.one";
 
 pub struct LB(Arc<LoadBalancer<RoundRobin>>);
 
+// pingora::proxy Module prelude 
 #[async_trait]
 impl ProxyHttp for LB {
     // @TODO struct Proxy within crate::connectors
@@ -76,7 +82,8 @@ impl CostomServer for Box<impl Server>{
 
     // @TODO
     fn health_checking(server: &Server){
-        
+       // pingora::server::Server fn add_service() 
+       // pingora Module services -> ServiceReadyNotifierServiceHandle
     }
 
     async fn run_forever(self) {
@@ -131,6 +138,7 @@ pub fn pingora_api_worker(){
         // filltering
 
         // logging
+        // pingora::services Module listening 
     });
 }
 
