@@ -125,6 +125,13 @@ pub fn run_pingora(proxy_server: Server){
         proxy_server.add_service(lb);
 
         // @TODO build parameters
+        Proxy::ProxyHttp::early_request_filter( // -> Pin<Box<dyn Future<Result<>>>>
+            proxy_server: self,
+            _sesstion: mut Sesstion,
+            _ctx: Self::CTX
+        );
+
+        // @TODO build parameters
         Proxy::ProxyHttp::request_body_filter(
             proxy_server: self,
             _session: mut Session,
